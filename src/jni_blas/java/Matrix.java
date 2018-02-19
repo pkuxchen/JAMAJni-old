@@ -75,7 +75,12 @@ public class Matrix implements Cloneable, java.io.Serializable {
         this.n = n;
     }
     
-    /** Construct a matrix from a one-dimensional packed array */
+    /** Construct a matrix from a one-dimensional packed array
+     @param vals One-dimensional array of doubles, packed by columns (ala Fortran).
+     @param m    Number of rows.
+     @exception  IllegalArgumentException Array length must be a multiple of m.
+     */
+    
     public Matrix (double vals[], int m) {
         this.m = m;
         n = (m != 0 ? vals.length/m : 0);
@@ -154,9 +159,9 @@ public class Matrix implements Cloneable, java.io.Serializable {
     /** Make a one-dimensional column packed copy of the internal array.*/
     public double[] getColumnPackedCopy () {
         double[] vals = new double[m*n];
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
-                vals[i+j*m] = A[i][j];
+        for (int j = 0; j < n; j++) {
+            for (int i = 0; i < m; i++) {
+                vals[i + j*m] = A[i][j];
             }
         }
         return vals;
@@ -167,7 +172,7 @@ public class Matrix implements Cloneable, java.io.Serializable {
         double[] vals = new double[m*n];
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
-                vals[i*n+j] = A[i][j];
+                vals[i*n + j] = A[i][j];
             }
         }
         return vals;
@@ -434,12 +439,24 @@ public class Matrix implements Cloneable, java.io.Serializable {
      */
     
     public Matrix uminus ( ) {
-        double[] a = this.getRowPackedCopy();
+        double[] a = this.getColumnPackedCopy();
         dscal(m * n, -1, a, 1);
-        Matrix C = new Matrix(a,m);
+        Matrix C = new Matrix(a, m);
         return C;
     }
     
+    /* No function in Level 1-3 involves operation of addition, operation of matrix
+     addition is written without using functions in Level 1-3        */
+    /* C=A+B     */
+    public Matrix plus (Matrix B){
+        checkMatrixDimensions(B);
+        double[] a = this.getColumnPackedCopy();
+        double[] b = B.getColumnPackedCopy();
+        daxpy(m * n, 1, a, 1, b, 1);
+        Matrix X = new Matrix (b , m);
+        return X;
+        
+    }
     
     /** A = A + B
      @param B    another matrix
@@ -447,28 +464,39 @@ public class Matrix implements Cloneable, java.io.Serializable {
      */
     
     public Matrix plusEquals (Matrix B) {
-        double[] a = this.getRowPackedCopy();
-        double[] b = B.getRowPackedCopy();
+        checkMatrixDimensions(B);
+        double[] a = this.getColumnPackedCopy();
+        double[] b = B.getColumnPackedCopy();
         daxpy(m*n, 1, a, 1, b, 1);
-        Matrix A = new Matrix (b , m);
-        return A;
-        
+        Matrix X = new Matrix (b , m);
+        return X;
     }
 
+    /* C = A - B     */
+    public Matrix minus (Matrix B){
+        checkMatrixDimensions(B);
+        double[] a = this.getColumnPackedCopy();
+        double[] b = B.getColumnPackedCopy();
+        daxpy(m * n, -1, a, 1, b, 1);
+        Matrix X = new Matrix (b , m);
+        return X;
+    }
+    
     /** A = A - B
      @param B    another matrix
      @return     A - B
      */
     
     public Matrix minusEquals (Matrix B) {
-        double[] a = this.getRowPackedCopy();
-        double[] b = B.getRowPackedCopy();
+        checkMatrixDimensions(B);
+        double[] a = this.getColumnPackedCopy();
+        double[] b = B.getColumnPackedCopy();
         daxpy(m*n, -1, a, 1, b, 1);
-        Matrix A = new Matrix (b , m);
-        return A;
-        
+        Matrix X = new Matrix (b , m);
+        return X;
     }
 
+    
     /** Element-by-element multiplication, C = A.*B
      @param B    another matrix
      @return     A.*B
@@ -503,6 +531,69 @@ public class Matrix implements Cloneable, java.io.Serializable {
         return this;
     }
     
+    /** Element-by-element right division, C = A./B
+     @param B    another matrix
+     @return     A./B
+     */
+    
+    public Matrix arrayRightDivide (Matrix B) {
+        checkMatrixDimensions(B);
+        Matrix X = new Matrix(m,n);
+        double[][] C = X.getArray();
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                C[i][j] = A[i][j] / B.A[i][j];
+            }
+        }
+        return X;
+    }
+    
+    /** Element-by-element right division in place, A = A./B
+     @param B    another matrix
+     @return     A./B
+     */
+    
+    public Matrix arrayRightDivideEquals (Matrix B) {
+        checkMatrixDimensions(B);
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                A[i][j] = A[i][j] / B.A[i][j];
+            }
+        }
+        return this;
+    }
+    
+    /** Element-by-element left division, C = A.\B
+     @param B    another matrix
+     @return     A.\B
+     */
+    
+    public Matrix arrayLeftDivide (Matrix B) {
+        checkMatrixDimensions(B);
+        Matrix X = new Matrix(m,n);
+        double[][] C = X.getArray();
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                C[i][j] = B.A[i][j] / A[i][j];
+            }
+        }
+        return X;
+    }
+    
+    /** Element-by-element left division in place, A = A.\B
+     @param B    another matrix
+     @return     A.\B
+     */
+    
+    public Matrix arrayLeftDivideEquals (Matrix B) {
+        checkMatrixDimensions(B);
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                A[i][j] = B.A[i][j] / A[i][j];
+            }
+        }
+        return this;
+    }
     
     
     /*Declaration
@@ -510,10 +601,24 @@ public class Matrix implements Cloneable, java.io.Serializable {
      */
     
     public Matrix times (double alpha){
-        double[] a = this.getRowPackedCopy();
+        double[] a = this.getColumnPackedCopy();
         dscal(m * n, alpha, a, 1);
-        Matrix B = new Matrix(a, m);
-        return B;
+        Matrix X = new Matrix(a, m);
+        return X;
+    }
+    
+    /** Multiply a matrix by a scalar in place, A = s*A
+     @param s    scalar
+     @return     replace A by s*A
+     */
+    
+    public Matrix timesEquals (double s) {
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                A[i][j] = s*A[i][j];
+            }
+        }
+        return this;
     }
     
     /*Declaration
@@ -521,11 +626,11 @@ public class Matrix implements Cloneable, java.io.Serializable {
      */
     
     public Matrix times (Matrix B) {
-        double[] a = this.getRowPackedCopy();
-        double[] b = B.getRowPackedCopy();
+        double[] a = this.getColumnPackedCopy();
+        double[] b = B.getColumnPackedCopy();
         Matrix C = new Matrix (m , B.getColumnDimension());
-        double[] c = C.getRowPackedCopy();
-        dgemm(Matrix.LAYOUT.RowMajor, Matrix.TRANSPOSE.NoTrans, Matrix.TRANSPOSE.NoTrans,
+        double[] c = C.getColumnPackedCopy();
+        dgemm(Matrix.LAYOUT.ColMajor, Matrix.TRANSPOSE.NoTrans, Matrix.TRANSPOSE.NoTrans,
               m, B.getColumnDimension(), n,
               1, a, b, 0, c);
         Matrix X = new Matrix(c, m);
@@ -539,29 +644,6 @@ public class Matrix implements Cloneable, java.io.Serializable {
      
      */
     
-    /* No function in Level 1-3 involves operation of addition, operation of matrix
-     addition is written without using functions in Level 1-3        */
-    /* C=A+B     */
-    public Matrix plus (Matrix B){
-        double[] a = this.getRowPackedCopy();
-        double[] b = B.getRowPackedCopy();
-        daxpy(m * n, 1, a, 1, b, 1);
-        Matrix C = new Matrix (b , m);
-        return C;
-        
-    }
-    
-    
-    /* C=A-B     */
-    public Matrix minus (Matrix B){
-        double[] a = this.getRowPackedCopy();
-        double[] b = B.getRowPackedCopy();
-        daxpy(m * n, -1, a, 1, b, 1);
-        Matrix C = new Matrix (b , m);
-        return C;
-        
-    }
-    
     
     
     
@@ -569,8 +651,8 @@ public class Matrix implements Cloneable, java.io.Serializable {
      C = A + alpha * B
      */
     public Matrix plus (Matrix B, double alpha){
-        double[] a = this.getRowPackedCopy();
-        double[] b = B.getRowPackedCopy();
+        double[] a = this.getColumnPackedCopy();
+        double[] b = B.getColumnPackedCopy();
         daxpy(m * n, alpha, a, 1, b, 1);
         Matrix C = new Matrix (b , m);
         return C;
@@ -579,10 +661,10 @@ public class Matrix implements Cloneable, java.io.Serializable {
     
     /* Using dtrmm, B=alpha*op(A)*B or B=alpha*B*op(A)        */
     public  Matrix tritimes (Matrix B, double alpha){
-        double[] a = this.getRowPackedCopy();
-        double[] b = B.getRowPackedCopy();
+        double[] a = this.getColumnPackedCopy();
+        double[] b = B.getColumnPackedCopy();
         /* need to check if A is square matrix*/
-        dtrmm(Matrix.LAYOUT.RowMajor, Matrix.SIDE.Left, Matrix.UPLO.Upper, Matrix.TRANSPOSE.NoTrans, Matrix.DIAG.NonUnit, B.getRowDimension(), B.getColumnDimension(), alpha, a, b);
+        dtrmm(Matrix.LAYOUT.ColMajor, Matrix.SIDE.Left, Matrix.UPLO.Upper, Matrix.TRANSPOSE.NoTrans, Matrix.DIAG.NonUnit, B.getRowDimension(), B.getColumnDimension(), alpha, a, b);
         Matrix C = new Matrix (b, B.getRowDimension());
         return C;
     }
@@ -642,76 +724,7 @@ public class Matrix implements Cloneable, java.io.Serializable {
     /**   Below is matrix division. Don't know if it should be here because division is somewhat not useful compared to multiplication
     */
     
-    
-    
-   
-  
-    
-    /* Element-by-element right division, C = A./B
-     @param B    another matrix
-     @return     A./B
-    */
-    
-    public Matrix arrayRightDivide (Matrix B) {
-        checkMatrixDimensions(B);
-        Matrix X = new Matrix(m,n);
-        double[][] C = X.getArray();
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
-                C[i][j] = A[i][j] / B.A[i][j];
-            }
-        }
-        return X;
-    }
-    
-     
-   /** Element-by-element right division in place, A = A./B
-     @param B    another matrix
-     @return     A./B
-    */
-    
-    public Matrix arrayRightDivideEquals (Matrix B) {
-        checkMatrixDimensions(B);
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
-                A[i][j] = A[i][j] / B.A[i][j];
-            }
-        }
-        return this;
-    }
-    
-   /** Element-by-element left division, C = A.\B
-     @param B    another matrix
-     @return     A.\B
-     */
-    
-    public Matrix arrayLeftDivide (Matrix B) {
-        checkMatrixDimensions(B);
-        Matrix X = new Matrix(m,n);
-        double[][] C = X.getArray();
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
-                C[i][j] = B.A[i][j] / A[i][j];
-            }
-        }
-        return X;
-    }
-    
-   /**   Element-by-element left division in place, A = A.\B
-     @param B    another matrix
-     @return     A.\B
-     */
-    
-    public Matrix arrayLeftDivideEquals (Matrix B) {
-        checkMatrixDimensions(B);
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
-                A[i][j] = B.A[i][j] / A[i][j];
-            }
-        }
-        return this;
-    }
-    
+
     
     /*****************************************************************/
     /****************************LAPACK*******************************/

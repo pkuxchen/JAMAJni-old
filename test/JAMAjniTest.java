@@ -452,7 +452,7 @@ public final class JAMAjniTest {
          arrayTimesEquals
          uminus
          **/
- /*
+ 
         print("\nTesting array-like methods...\n");
         S = new Matrix(columnwise,nonconformld);
         R = Matrix.random(A.getRowDimension(),A.getColumnDimension());
@@ -729,12 +729,12 @@ public final class JAMAjniTest {
         } catch ( java.lang.RuntimeException e ) {
             errorCount = try_failure(errorCount,"normInf()...","incorrect norm calculation");
         }
- /*       try {
+        try {
             check(A.normF(),Math.sqrt(sumofsquares));
             try_success("normF...","");
         } catch ( java.lang.RuntimeException e ) {
             errorCount = try_failure(errorCount,"normF()...","incorrect norm calculation");
-        } */
+        }
         try {
             check(A.trace(),sumofdiagonals);
             try_success("trace()...","");
