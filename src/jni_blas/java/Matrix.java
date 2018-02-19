@@ -8,6 +8,7 @@ import java.text.FieldPosition;
 import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.StreamTokenizer;
+import JAMAJni.util.*;
 
 
 /**CBLAS.java*/
@@ -127,6 +128,12 @@ public class Matrix implements Cloneable, java.io.Serializable {
         return X;
     }
     
+    /** Clone the Matrix object.
+     */
+    
+    public Object clone () {
+        return this.copy();
+    }
     
     /** Access the internal two-dimensional array. */
     public double[][] getArray () {
@@ -144,6 +151,17 @@ public class Matrix implements Cloneable, java.io.Serializable {
 	 return C;
      }
 
+    /** Make a one-dimensional column packed copy of the internal array.*/
+    public double[] getColumnPackedCopy () {
+        double[] vals = new double[m*n];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                vals[i+j*m] = A[i][j];
+            }
+        }
+        return vals;
+    }
+    
     /** Make a one-dimensional row packed copy of the internal array. */
     public double[] getRowPackedCopy() {
         double[] vals = new double[m*n];
@@ -154,17 +172,6 @@ public class Matrix implements Cloneable, java.io.Serializable {
         }
         return vals;
     }
-
-   /** Make a one-dimensional column packed copy of the internal array.*/
-   public double[] getColumnPackedCopy () {
-	  double[] vals = new double[m*n];
-	 for (int i = 0; i < m; i++) {
-		for (int j = 0; j < n; j++) {
-		       vals[i+j*m] = A[i][j];
-		}
-	 }
-    return vals;
-   }   
 
     /** Get row dimension.*/
     public int getRowDimension () {
@@ -179,134 +186,6 @@ public class Matrix implements Cloneable, java.io.Serializable {
         return A[i][j];
     }
     
-    /*Declaration
-     B = alpha * A
-     */
-    
-    public Matrix times (double alpha){
-        double[] a = this.getRowPackedCopy();
-        dscal(m * n, alpha, a, 1);
-        Matrix B = new Matrix(a, m);
-        return B;
-    } 
-
-    /*Declaration
-     X = A * B
-     */
-    
-    public Matrix times (Matrix B) {
-	double[] a = this.getRowPackedCopy();
-	double[] b = B.getRowPackedCopy();
-	Matrix C = new Matrix (m , B.getColumnDimension());
-	double[] c = C.getRowPackedCopy();
-	dgemm(Matrix.LAYOUT.RowMajor, Matrix.TRANSPOSE.NoTrans, Matrix.TRANSPOSE.NoTrans,
-              m, B.getColumnDimension(), n,
-	      1, a, b, 0, c);
-        Matrix X = new Matrix(c, m);
-	return X;
-    }
-    
-
-    
-/* Tentatively made by Diyang
-
- 
-*/
-    
-    /* No function in Level 1-3 involves operation of addition, operation of matrix
-     addition is written without using functions in Level 1-3        */
-    /* C=A+B     */
-    public Matrix plus (Matrix B){
-        double[] a = this.getRowPackedCopy();
-        double[] b = B.getRowPackedCopy();
-        daxpy(m * n, 1, a, 1, b, 1);
-        Matrix C = new Matrix (b , m);
-        return C;
-        
-    }
-    
-   
-    /* C=A-B     */
-    public Matrix minus (Matrix B){
-        double[] a = this.getRowPackedCopy();
-        double[] b = B.getRowPackedCopy();
-        daxpy(m * n, -1, a, 1, b, 1);
-        Matrix C = new Matrix (b , m);
-        return C;
-        
-    }
-
-    
-    
-    
-    /* Using daxpy, constants times a matrix plus a matrix
-     C = A + alpha * B
-     */
-     public Matrix plus (Matrix B, double alpha){
-     double[] a = this.getRowPackedCopy();
-     double[] b = B.getRowPackedCopy();
-     daxpy(m * n, alpha, a, 1, b, 1);
-         Matrix C = new Matrix (b , m);
-     return C;
-     }
-    
-    
-    /* Using dtrmm, B=alpha*op(A)*B or B=alpha*B*op(A)        */
-    public  Matrix tritimes (Matrix B, double alpha){
-        double[] a = this.getRowPackedCopy();
-        double[] b = B.getRowPackedCopy();
-        /* need to check if A is square matrix*/
-        dtrmm(Matrix.LAYOUT.RowMajor, Matrix.SIDE.Left, Matrix.UPLO.Upper, Matrix.TRANSPOSE.NoTrans, Matrix.DIAG.NonUnit, B.getRowDimension(), B.getColumnDimension(), alpha, a, b);
-        Matrix C = new Matrix (b, B.getRowDimension());
-        return C;
-    }
-    
-    
-    /* Instead of using ddot, which is to compute the dot product of two vectors, computation
-     of the Frobenius norm of a matrix     */
-    public double getnorm (){
-        double f = 0;
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
-                f = Math.hypot(f,A[i][j]);
-            }
-        }
-        return f;
-    }
-    
-    /* dgemv: y:=alpha*A*x + beta*y or y:=alpha*A(TRANS)*x + beta*y     */
-    
-    
-    
-    /* dtrmv: x:= A*x or x:= A(Trans)*x  */
-    /* square matrix times a vector */
-    
-   /** public static Matrix mtimesv (Matrix A, double[] x){
-         need to check if A is a square matrix
-      double[] a = A.getRowPackedCopy();
-        dtrmv(Matrix.LAYOUT.RowMajor, Matrix.UPLO.Upper, Matrix.TRANSPOSE.NoTrans, Matrix.DIAG.NonUnit, A.getRowDimension(), a, x, 1);
-        return x;
-    }
-     **/
-    /* cannot be converted because x is a vector not a matrix!    */
-    
-    
-    
-    
-    
-    
-    /* dsymv  very similar to dgemv*/
-    
-    
-    /*dsymm   C=alpha*A*B + beta*C or C=alpha*B*A + beta*C   */
-    
-
-    
-    /* Get a submatrix
-     
-     return      A(i0:i1,j0:j1)
-     
-     */
     public Matrix getMatrix (int i0, int i1, int j0, int j1) {
         Matrix X = new Matrix(i1-i0+1,j1-j0+1);
         double[][] B = X.getArray();
@@ -513,6 +392,14 @@ public class Matrix implements Cloneable, java.io.Serializable {
         }
         return f;
     }
+    
+    /** Two norm
+     @return    maximum singular value.
+     */
+    
+    public double norm2 () {
+        return (new SingularValueDecomposition(this).norm2());
+    }
 
     /** Infinity norm
      @return    maximum row sum.
@@ -526,6 +413,18 @@ public class Matrix implements Cloneable, java.io.Serializable {
                 s += Math.abs(A[i][j]);
             }
             f = Math.max(f,s);
+        }
+        return f;
+    }
+    
+    /** Frobenius norm */
+    
+    public double normF () {
+        double f = 0;
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                f = Maths.hypot(f,A[i][j]);
+            }
         }
         return f;
     }
@@ -606,7 +505,134 @@ public class Matrix implements Cloneable, java.io.Serializable {
     
     
     
+    /*Declaration
+     B = alpha * A
+     */
     
+    public Matrix times (double alpha){
+        double[] a = this.getRowPackedCopy();
+        dscal(m * n, alpha, a, 1);
+        Matrix B = new Matrix(a, m);
+        return B;
+    }
+    
+    /*Declaration
+     X = A * B
+     */
+    
+    public Matrix times (Matrix B) {
+        double[] a = this.getRowPackedCopy();
+        double[] b = B.getRowPackedCopy();
+        Matrix C = new Matrix (m , B.getColumnDimension());
+        double[] c = C.getRowPackedCopy();
+        dgemm(Matrix.LAYOUT.RowMajor, Matrix.TRANSPOSE.NoTrans, Matrix.TRANSPOSE.NoTrans,
+              m, B.getColumnDimension(), n,
+              1, a, b, 0, c);
+        Matrix X = new Matrix(c, m);
+        return X;
+    }
+    
+    
+    
+    /* Tentatively made by Diyang
+     
+     
+     */
+    
+    /* No function in Level 1-3 involves operation of addition, operation of matrix
+     addition is written without using functions in Level 1-3        */
+    /* C=A+B     */
+    public Matrix plus (Matrix B){
+        double[] a = this.getRowPackedCopy();
+        double[] b = B.getRowPackedCopy();
+        daxpy(m * n, 1, a, 1, b, 1);
+        Matrix C = new Matrix (b , m);
+        return C;
+        
+    }
+    
+    
+    /* C=A-B     */
+    public Matrix minus (Matrix B){
+        double[] a = this.getRowPackedCopy();
+        double[] b = B.getRowPackedCopy();
+        daxpy(m * n, -1, a, 1, b, 1);
+        Matrix C = new Matrix (b , m);
+        return C;
+        
+    }
+    
+    
+    
+    
+    /* Using daxpy, constants times a matrix plus a matrix
+     C = A + alpha * B
+     */
+    public Matrix plus (Matrix B, double alpha){
+        double[] a = this.getRowPackedCopy();
+        double[] b = B.getRowPackedCopy();
+        daxpy(m * n, alpha, a, 1, b, 1);
+        Matrix C = new Matrix (b , m);
+        return C;
+    }
+    
+    
+    /* Using dtrmm, B=alpha*op(A)*B or B=alpha*B*op(A)        */
+    public  Matrix tritimes (Matrix B, double alpha){
+        double[] a = this.getRowPackedCopy();
+        double[] b = B.getRowPackedCopy();
+        /* need to check if A is square matrix*/
+        dtrmm(Matrix.LAYOUT.RowMajor, Matrix.SIDE.Left, Matrix.UPLO.Upper, Matrix.TRANSPOSE.NoTrans, Matrix.DIAG.NonUnit, B.getRowDimension(), B.getColumnDimension(), alpha, a, b);
+        Matrix C = new Matrix (b, B.getRowDimension());
+        return C;
+    }
+    
+    
+    /* Instead of using ddot, which is to compute the dot product of two vectors, computation
+     of the Frobenius norm of a matrix     */
+    public double getnorm (){
+        double f = 0;
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                f = Math.hypot(f,A[i][j]);
+            }
+        }
+        return f;
+    }
+    
+    /* dgemv: y:=alpha*A*x + beta*y or y:=alpha*A(TRANS)*x + beta*y     */
+    
+    
+    
+    /* dtrmv: x:= A*x or x:= A(Trans)*x  */
+    /* square matrix times a vector */
+    
+    /** public static Matrix mtimesv (Matrix A, double[] x){
+     need to check if A is a square matrix
+     double[] a = A.getRowPackedCopy();
+     dtrmv(Matrix.LAYOUT.RowMajor, Matrix.UPLO.Upper, Matrix.TRANSPOSE.NoTrans, Matrix.DIAG.NonUnit, A.getRowDimension(), a, x, 1);
+     return x;
+     }
+     **/
+    /* cannot be converted because x is a vector not a matrix!    */
+    
+    
+    
+    
+    
+    
+    /* dsymv  very similar to dgemv*/
+    
+    
+    /*dsymm   C=alpha*A*B + beta*C or C=alpha*B*A + beta*C   */
+    
+    
+    
+    /* Get a submatrix
+     
+     return      A(i0:i1,j0:j1)
+     
+     */
    
     
     
