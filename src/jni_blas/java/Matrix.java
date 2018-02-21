@@ -15,7 +15,7 @@ import JAMAJni.util.*;
 
 public class Matrix implements Cloneable, java.io.Serializable {
  private Matrix() {}
- static {
+    static {
      
     /* load library (which will contain wrapper for cblas function.)*/
     System.loadLibrary("blas_lite");
@@ -452,11 +452,11 @@ public class Matrix implements Cloneable, java.io.Serializable {
         checkMatrixDimensions(B);
         double[] a = this.getColumnPackedCopy();
         double[] b = B.getColumnPackedCopy();
-        daxpy(m * n, 1, a, 1, b, 1);
-        Matrix X = new Matrix (b , m);
-        return X;
-        
+        daxpy(m * n, 1, b, 1, a, 1);
+        Matrix C = new Matrix (a , m);
+        return C;
     }
+    
     
     /** A = A + B
      @param B    another matrix
@@ -465,11 +465,12 @@ public class Matrix implements Cloneable, java.io.Serializable {
     
     public Matrix plusEquals (Matrix B) {
         checkMatrixDimensions(B);
-        double[] a = this.getColumnPackedCopy();
-        double[] b = B.getColumnPackedCopy();
-        daxpy(m*n, 1, a, 1, b, 1);
-        Matrix X = new Matrix (b , m);
-        return X;
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                A[i][j] = A[i][j] + B.A[i][j];
+            }
+        }
+        return this;
     }
 
     /* C = A - B     */
@@ -477,8 +478,8 @@ public class Matrix implements Cloneable, java.io.Serializable {
         checkMatrixDimensions(B);
         double[] a = this.getColumnPackedCopy();
         double[] b = B.getColumnPackedCopy();
-        daxpy(m * n, -1, a, 1, b, 1);
-        Matrix X = new Matrix (b , m);
+        daxpy(m * n, -1.0, b, 1, a, 1);
+        Matrix X = new Matrix (a , m);
         return X;
     }
     
@@ -489,11 +490,12 @@ public class Matrix implements Cloneable, java.io.Serializable {
     
     public Matrix minusEquals (Matrix B) {
         checkMatrixDimensions(B);
-        double[] a = this.getColumnPackedCopy();
-        double[] b = B.getColumnPackedCopy();
-        daxpy(m*n, -1, a, 1, b, 1);
-        Matrix X = new Matrix (b , m);
-        return X;
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                A[i][j] = A[i][j] - B.A[i][j];
+            }
+        }
+        return this;
     }
 
     
@@ -628,23 +630,16 @@ public class Matrix implements Cloneable, java.io.Serializable {
     public Matrix times (Matrix B) {
         double[] a = this.getColumnPackedCopy();
         double[] b = B.getColumnPackedCopy();
-        Matrix C = new Matrix (m , B.getColumnDimension());
-        double[] c = C.getColumnPackedCopy();
+        double[] c = new double[m * B.getColumnDimension()];
         dgemm(Matrix.LAYOUT.ColMajor, Matrix.TRANSPOSE.NoTrans, Matrix.TRANSPOSE.NoTrans,
-              m, B.getColumnDimension(), n,
-              1, a, b, 0, c);
+              m, B.getColumnDimension(), n, 1, a, b, 0, c);
         Matrix X = new Matrix(c, m);
         return X;
     }
     
     
     
-    /* Tentatively made by Diyang
-     
-     
-     */
-    
-    
+    /* Tentatively made by Diyang */
     
     
     /* Using daxpy, constants times a matrix plus a matrix
