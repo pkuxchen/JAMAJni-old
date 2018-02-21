@@ -14,9 +14,11 @@ public class LUDecomposition implements java.io.Serializable {
 
     /** Row and column dimensions, min(m, n) and INFO.*/
     private int m, n, l, info;
+    
+    private double pivsign;
 
     /** Internal storage of pivot vector.*/
-    private int[] piv;
+    private int[] ipiv, piv;
 
     /* ------------------------
      * Constructor
@@ -27,12 +29,24 @@ public class LUDecomposition implements java.io.Serializable {
         m = Arg.getRowDimension();
         n = Arg.getColumnDimension();
         l = Math.min(m, n);
-        piv = new int[l];
+        ipiv = new int[l];
+        piv = new int [l];
+        pivsign = 1.0;
+        int temp;
+        
         for (int i = 0; i < l; i++) {
+            ipiv[i] = i;
             piv[i] = i;
         }
         int matrix_layout = LUDecomposition.LAYOUT.ColMajor;
-        info = dgetrf(matrix_layout, m, n, LU, m, piv);
+        info = dgetrf(matrix_layout, m, n, LU, m, ipiv);
+
+        for (int i = 0; i < l; i++){
+            temp = piv[ipiv[i] - 1];
+            piv[ipiv[i] - 1] = piv[i];
+            piv[i] = temp;
+            if (piv[i] != i ){pivsign = -pivsign;}
+        }
 	}
 
     /* ------------------------
@@ -79,7 +93,7 @@ public class LUDecomposition implements java.io.Serializable {
         
         for (int i = 0; i < nrow; i++){
             for (int j = 0; j < ncol; j++) {
-                U[i][j] = ((i <= j) ? LU[i + j*m] : 0.0);
+                U[i][j] = ((i <= j) ? LU[i + j * m] : 0.0);
             }
         }
         return X;
@@ -111,26 +125,13 @@ public class LUDecomposition implements java.io.Serializable {
      @exception  IllegalArgumentException  Matrix must be square
      */
 
-    public double det () {
+    public double det( ) {
         if (m != n) {
             throw new IllegalArgumentException("Matrix must be square.");
         }
         
-        double pivsign = 1.0;
         double d = (double) 1.0;
         int temp = 0;
-        
-   /*     for (int i = 0; i < n; i++) {
-            if (piv[i] == i+1 ){
-                continue;
-            } else {
-                temp = piv[piv[i]-1];
-                piv[piv[i]-1] = piv[i];
-                piv[i] = temp;
-                pivsign = -pivsign;
-                i = i - 1;
-            }
-        }*/
         
         for (int j = 0; j < n; j++){
             d *= LU[j * n + j];
@@ -157,7 +158,7 @@ public class LUDecomposition implements java.io.Serializable {
         int ldb = m;
         int lda = m;
         double[] b = B.getColumnPackedCopy();
-        dgetrs(matrix_layout, trans, m, nrhs, LU, lda, piv, b, ldb);
+        dgetrs(matrix_layout, trans, m, nrhs, LU, lda, ipiv, b, ldb);
         Matrix C = new Matrix(b, B.getRowDimension());
         return C;
     }

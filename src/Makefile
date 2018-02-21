@@ -7,6 +7,7 @@ JAVA_HOME = ..
 JNI_LAPACK_SRC = $(JAVA_HOME)/src/jni_lapack
 JNI_BLAS_SRC = $(JAVA_HOME)/src/jni_blas
 JNI_LAPACKE_SRC = $(JAVA_HOME)/src/jni_lapacke
+JNI_UTIL = $(JAVA_HOME)/src/util
 
 INCLUDE = -I$(JAVA_HOME)/include
 
@@ -29,7 +30,7 @@ DYLIB_BLAS = $(JAVA_HOME)/lib/libblas_lite.dylib
 # For package JAMAJni
 JC = javac
 JFLAGS = -d
-JAVA_SRC = $(JNI_LAPACKE_SRC)/java/LUDecomposition.java $(JNI_LAPACKE_SRC)/java/CholeskyDecomposition.java $(JNI_LAPACKE_SRC)/java/QRDecomposition.java $(JNI_LAPACKE_SRC)/java/EigenvalueDecomposition.java $(JNI_LAPACKE_SRC)/java/SingularValueDecomposition.java $(JNI_BLAS_SRC)/java/Matrix.java
+JAVA_SRC = $(JNI_UTIL)/Maths.java $(JNI_LAPACKE_SRC)/java/LUDecomposition.java $(JNI_LAPACKE_SRC)/java/CholeskyDecomposition.java $(JNI_LAPACKE_SRC)/java/QRDecomposition.java $(JNI_LAPACKE_SRC)/java/EigenvalueDecomposition.java $(JNI_LAPACKE_SRC)/java/SingularValueDecomposition.java $(JNI_BLAS_SRC)/java/Matrix.java 
 PACKAGE = $(JAVA_HOME)/class/*
 
 

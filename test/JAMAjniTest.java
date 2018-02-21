@@ -452,7 +452,7 @@ public final class JAMAjniTest {
          arrayTimesEquals
          uminus
          **/
- /*
+ 
         print("\nTesting array-like methods...\n");
         S = new Matrix(columnwise,nonconformld);
         R = Matrix.random(A.getRowDimension(),A.getColumnDimension());
@@ -485,7 +485,7 @@ public final class JAMAjniTest {
         
         A = R.copy();
         B = Matrix.random(A.getRowDimension(),A.getColumnDimension());
-        C = A.minus(B); 
+        C = A.minus(B);
         try {
             S = A.plus(S);
             errorCount = try_failure(errorCount,"plus conformance check... ","nonconformance not raised");
@@ -498,24 +498,6 @@ public final class JAMAjniTest {
         } catch ( java.lang.RuntimeException e ) {
             errorCount = try_failure(errorCount,"plus... ","(C = A - B, but C + B != A)");
         }
-       
-        double alpha = 7;
-        C = A.minus(B.times(alpha));
-        try {
-            S = A.plus(S,alpha);
-            errorCount = try_failure(errorCount,"plus conformance check... ","nonconformance not raised");
-        } catch ( IllegalArgumentException e ) {
-            try_success("plus conformance check... ","");
-        }
-        try {
-            check(C.plus(B,alpha),A);
-            try_success("plus... ","");
-        } catch ( java.lang.RuntimeException e ) {
-            errorCount = try_failure(errorCount,"plus... ","(C = A - B, but C + B != A)");
-        }
-        
-        
-        
         C = A.minus(B);
         C.plusEquals(B);
         try {
@@ -621,7 +603,7 @@ public final class JAMAjniTest {
             errorCount = try_failure(errorCount,"arrayTimesEquals... ","(A = R, A = A.*B, but A./B != R)");
         }
         
-        /**   
+/**
          I/O methods:
          read
          print
@@ -729,12 +711,12 @@ public final class JAMAjniTest {
         } catch ( java.lang.RuntimeException e ) {
             errorCount = try_failure(errorCount,"normInf()...","incorrect norm calculation");
         }
- /*       try {
+        try {
             check(A.normF(),Math.sqrt(sumofsquares));
             try_success("normF...","");
         } catch ( java.lang.RuntimeException e ) {
             errorCount = try_failure(errorCount,"normF()...","incorrect norm calculation");
-        } */
+        }
         try {
             check(A.trace(),sumofdiagonals);
             try_success("trace()...","");
@@ -754,7 +736,7 @@ public final class JAMAjniTest {
         } catch ( java.lang.RuntimeException e ) {
             errorCount = try_failure(errorCount,"times(Matrix)...","incorrect Matrix-Matrix product calculation");
         }
-   /*     try {
+ /*       try {
             check(A.times(0.),Z);
             try_success("times(double)...","");
         } catch ( java.lang.RuntimeException e ) {
