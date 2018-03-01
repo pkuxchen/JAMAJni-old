@@ -15,8 +15,8 @@ package JAMAJni;
 
 public class QRDecomposition implements java.io.Serializable {
  static {
-    /* load library (which will contain wrapper for cblas function.)*/
-    System.loadLibrary("lapack_lite_QRDecomposition");
+    /* load library (which will contain wrapper for lapacke function.)*/
+    System.loadLibrary("lapacke_QRDecomposition");
  }
      
     /* ------------------------
@@ -91,7 +91,7 @@ public class QRDecomposition implements java.io.Serializable {
         }
         dorgqr(matrix_layout, m, n, k, Q, lda, tau);
         return new Matrix(Q, m);
-        /** here n has to be less than m; otherwise dorgqr will fail ????*/
+        /** here n has to be less than m; otherwise dorgqr will fail ?*/
     }
 
     /** Least squares solution of A*X = B

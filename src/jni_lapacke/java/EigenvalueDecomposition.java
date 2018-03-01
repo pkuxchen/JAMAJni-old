@@ -1,7 +1,5 @@
 package JAMAJni;
 
-/*import JAMAJni.jni_blas.*;
-
 /** Eigenvalues and eigenvectors of a real matrix.
  <P>
     If A is symmetric, then A = V*D*V' where the eigenvalue matrix D is
@@ -21,7 +19,7 @@ package JAMAJni;
 public class EigenvalueDecomposition  implements java.io.Serializable {
  static {
     /* load library (which will contain wrapper for cblas function.)*/
-    System.loadLibrary("lapack_lite_EigenvalueDecomposition");
+    System.loadLibrary("lapacke_EigenvalueDecomposition");
      
  }
 

@@ -602,6 +602,29 @@ public final class JAMAjniTest {
         } catch ( java.lang.RuntimeException e ) {
             errorCount = try_failure(errorCount,"arrayTimesEquals... ","(A = R, A = A.*B, but A./B != R)");
         }
+   
+        /*
+         A.plus(B, alpha) = A + alpha * B = C
+         */
+        S = new Matrix(columnwise,nonconformld);
+        A = R.copy();
+        B = Matrix.random(A.getRowDimension(),A.getColumnDimension());
+        C = A.plus(B,7);
+        try {
+            S = A.plus(S,7);
+            errorCount = try_failure(errorCount,"plus conformance check... ","nonconformance not raised");
+        } catch ( IllegalArgumentException e ) {
+            try_success("plus conformance check... ","");
+        }
+        try {
+            check(C.minus(B.times(7)),A);
+            try_success("plus... ","");
+        } catch ( java.lang.RuntimeException e ) {
+            errorCount = try_failure(errorCount,"plus... ","(C = A + alpha * B , but C - alpha * B != A)");
+        }
+        
+        
+        
         
 /**
          I/O methods:
@@ -666,10 +689,13 @@ public final class JAMAjniTest {
             errorCount = try_failure(errorCount,"writeObject(Matrix)/readObject(Matrix)...","unexpected error in serialization test");
         }
         
+      
+        
         /**
          LA methods:
          transpose
          times
+         tritimes
          cond
          rank
          det
@@ -736,6 +762,15 @@ public final class JAMAjniTest {
         } catch ( java.lang.RuntimeException e ) {
             errorCount = try_failure(errorCount,"times(Matrix)...","incorrect Matrix-Matrix product calculation");
         }
+        
+        SQ = new Matrix(square);
+        try {
+            check(A.times(A.transpose()),SQ);
+            try_success("times(Matrix)...","");
+        } catch ( java.lang.RuntimeException e ) {
+            errorCount = try_failure(errorCount,"times(Matrix)...","incorrect Matrix-Matrix product calculation");
+        }
+        
  /*       try {
             check(A.times(0.),Z);
             try_success("times(double)...","");

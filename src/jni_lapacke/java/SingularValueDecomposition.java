@@ -17,7 +17,7 @@ package JAMAJni;
 public class SingularValueDecomposition implements java.io.Serializable {
  static {
     /* load library (which will contain wrapper for cblas function.)*/
-    System.loadLibrary("lapack_lite_SingularValueDecomposition");
+    System.loadLibrary("lapacke_SingularValueDecomposition");
  }
 
  /* ------------------------
@@ -198,9 +198,11 @@ public class SingularValueDecomposition implements java.io.Serializable {
                                     double[] a, int lda, double[] s, double[] u,
                                     int ldu, double[] vt, int ldvt);
     
-    public static native int dgeev(int matrix_layout, char jobvl, char jobvr, int n,
-                                   double[] a, int lda, double[] wr, double[] wi,
-                                   double[] vl, int ldvl, double[] vr, int ldvr);
+    /*DGESDD computes the singular value decomposition (SVD) of a real
+     M-by-N matrix A, optionally computing the left and right singular
+     vectors.  If singular vectors are desired, it uses a
+     divide-and-conquer algorithm.*/
+    
     
     /**inform java virtual machine that function is defined externally*/
     
