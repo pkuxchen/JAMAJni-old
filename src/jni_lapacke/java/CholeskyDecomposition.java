@@ -3,7 +3,7 @@ package JAMAJni;
 public class CholeskyDecomposition implements java.io.Serializable {
 	static {
         /* load library (which will contain wrapper for cblas function.)*/
-         System.loadLibrary("lapack_lite_CholeskyDecomposition");
+         System.loadLibrary("lapacke_CholeskyDecomposition");
 	}
 
     /* ------------------------

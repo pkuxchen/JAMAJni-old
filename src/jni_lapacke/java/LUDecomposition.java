@@ -3,7 +3,7 @@ package JAMAJni;
 public class LUDecomposition implements java.io.Serializable {
  static {
     /* load library (which will contain wrapper for cblas function.)*/
-    System.loadLibrary("lapack_lite_LUDecomposition");
+    System.loadLibrary("lapacke_LUDecomposition");
  }
    
     /* ------------------------
@@ -215,7 +215,7 @@ public class LUDecomposition implements java.io.Serializable {
     public static native int dgetrs(int matrix_layout, char trans, int n, int nrhs,
                                     double[] a, int lda, int[] piv, double[] b, int ldb);
     
-//    private static final long serialVersionUID = 1;
+    private static final long serialVersionUID = 1;
 }
     
     

@@ -646,15 +646,16 @@ public class Matrix implements Cloneable, java.io.Serializable {
      C = A + alpha * B
      */
     public Matrix plus (Matrix B, double alpha){
+        checkMatrixDimensions(B);
         double[] a = this.getColumnPackedCopy();
         double[] b = B.getColumnPackedCopy();
-        daxpy(m * n, alpha, a, 1, b, 1);
-        Matrix C = new Matrix (b , m);
+        daxpy(m * n, alpha, b, 1, a, 1);
+        Matrix C = new Matrix (a , m);
         return C;
     }
     
     
-    /* Using dtrmm, B=alpha*op(A)*B or B=alpha*B*op(A)        */
+    /* Using dtrmm, C=alpha*op(A)*B or  C=alpha*B*op(A)        */
     public  Matrix tritimes (Matrix B, double alpha){
         double[] a = this.getColumnPackedCopy();
         double[] b = B.getColumnPackedCopy();

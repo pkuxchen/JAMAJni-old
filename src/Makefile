@@ -19,11 +19,11 @@ C_SRC_LAPACK3 = $(JNI_LAPACKE_SRC)/c/QRDecomposition.c
 C_SRC_LAPACK4 = $(JNI_LAPACKE_SRC)/c/EigenvalueDecomposition.c
 C_SRC_LAPACK5 = $(JNI_LAPACKE_SRC)/c/SingularValueDecomposition.c
 C_SRC_BLAS = $(JNI_BLAS_SRC)/c/Matrix.c
-DYLIB_LAPACK1 = $(JAVA_HOME)/lib/liblapack_lite_LUDecomposition.dylib
-DYLIB_LAPACK2 = $(JAVA_HOME)/lib/liblapack_lite_CholeskyDecomposition.dylib
-DYLIB_LAPACK3 = $(JAVA_HOME)/lib/liblapack_lite_QRDecomposition.dylib
-DYLIB_LAPACK4 = $(JAVA_HOME)/lib/liblapack_lite_EigenvalueDecomposition.dylib
-DYLIB_LAPACK5 = $(JAVA_HOME)/lib/liblapack_lite_SingularValueDecomposition.dylib
+DYLIB_LAPACK1 = $(JAVA_HOME)/lib/liblapacke_LUDecomposition.dylib
+DYLIB_LAPACK2 = $(JAVA_HOME)/lib/liblapacke_CholeskyDecomposition.dylib
+DYLIB_LAPACK3 = $(JAVA_HOME)/lib/liblapacke_QRDecomposition.dylib
+DYLIB_LAPACK4 = $(JAVA_HOME)/lib/liblapacke_EigenvalueDecomposition.dylib
+DYLIB_LAPACK5 = $(JAVA_HOME)/lib/liblapacke_SingularValueDecomposition.dylib
 DYLIB_BLAS = $(JAVA_HOME)/lib/libblas_lite.dylib
 	
 
@@ -69,3 +69,5 @@ clean:
 	rm -f $(JAVA_HOME)/lib/*.dylib
 	rm -f $(JAVA_HOME)/test/*.class
 	rm -f $(JAVA_HOME)/test/*.txt
+	rm -f $(JAVA_HOME)/test/*.out
+	rm -f $(JAVA_HOME)/test/*.serial
