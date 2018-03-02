@@ -655,8 +655,15 @@ public class Matrix implements Cloneable, java.io.Serializable {
     }
     
     
-    /* Using dtrmm, C=alpha*op(A)*B or  C=alpha*B*op(A)        */
+    /* Using dtrmm, C=alpha*op(A)*B or        */
     public  Matrix tritimes (Matrix B, double alpha){
+       
+        if (m != n) {
+            throw new IllegalArgumentException("Matrix must be square.");
+        }
+        if (B.getRowDimension() != n) {
+            throw new IllegalArgumentException("Matrix row dimensions must agree.");
+        }
         double[] a = this.getColumnPackedCopy();
         double[] b = B.getColumnPackedCopy();
         /* need to check if A is square matrix*/
