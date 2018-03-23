@@ -98,37 +98,5 @@ JNIEXPORT jint Java_JAMAJni_QRDecomposition_dormqr
     return info;
     
 }
-/*
-JNIEXPORT void Java_JAMAJni_QRDecomposition_dtrsm
-(JNIEnv *env, jclass klass, jchar side, jchar uplo, jchar transa,
- jchar diag, jint m, jint n, jdouble alpha, jdoubleArray A, jint lda,
- jdoubleArray B, jint ldb){
-    
-    /*  DTRSM  solves one of the matrix equations
-     
-     op( A )*X = alpha*B,   or   X*op( A ) = alpha*B,
-     
-     where alpha is a scalar, X and B are m by n matrices, A is a unit, or
-     non-unit,  upper or lower triangular matrix  and  op( A )  is one  of
-     
-     op( A ) = A   or   op( A ) = A**T.
-     
-     The matrix X is overwritten on B.*/
-    
-/*    double *aElems, *bElems;
-    
-    aElems = (*env)-> GetDoubleArrayElements (env,A, NULL);
-    bElems = (*env)-> GetDoubleArrayElements (env,B, NULL);
-    
-    assert(aElems && bElems);
-    
-    dtrsm_(&side, &uplo, &transa, &diag, &m, &n, &alpha, aElems, &lda,
-           bElems, &ldb);
-    
-    (*env)-> ReleaseDoubleArrayElements (env, B, bElems, 0);
-    (*env)-> ReleaseDoubleArrayElements (env, A, aElems, JNI_ABORT);
-    
-    return;
-    
-}*/
+
 

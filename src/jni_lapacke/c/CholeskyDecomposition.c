@@ -35,6 +35,8 @@ JNIEXPORT jint Java_JAMAJni_CholeskyDecomposition_dpotri(JNIEnv *env, jclass kla
     
     (*env)-> ReleaseDoubleArrayElements (env, a, aElems, 0);
     
+    return info;
+    
 }
 
 JNIEXPORT jint Java_JAMAJni_CholeskyDecomposition_dpotrs (JNIEnv *env, jclass klass, jint matrix_layout, jchar uplo, jint n, jint nrhs, jdoubleArray a, jint lda, jdoubleArray b, jint ldb){
