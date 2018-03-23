@@ -2,9 +2,9 @@
 #include <assert.h>
 #include <lapacke.h>
 
-extern void dtrmm_(char *side, char *uplo, char *transa, char *diag, int *m,
+/*extern void dtrsm_(char *side, char *uplo, char *transa, char *diag, int *m,
                    int *n, double *alpha, double *A, int *lda, double *B,
-                   int *ldb);
+                   int *ldb);*/
 
 JNIEXPORT jint Java_JAMAJni_QRDecomposition_dgeqrf (JNIEnv *env, jclass klass, jint matrix_layout,
                                                     jint m, jint n, jdoubleArray a, jint lda,
@@ -69,6 +69,7 @@ JNIEXPORT jint Java_JAMAJni_QRDecomposition_dgeqp3  (JNIEnv *env, jclass klass, 
     (*env)-> ReleaseDoubleArrayElements (env, tau, tauElems, 0);
     (*env)-> ReleaseIntArrayElements (env, jpvt, jpvtElems, 0);
     
+    return info;
 }
 
 JNIEXPORT jint Java_JAMAJni_QRDecomposition_dormqr
@@ -97,7 +98,7 @@ JNIEXPORT jint Java_JAMAJni_QRDecomposition_dormqr
     return info;
     
 }
-
+/*
 JNIEXPORT void Java_JAMAJni_QRDecomposition_dtrsm
 (JNIEnv *env, jclass klass, jchar side, jchar uplo, jchar transa,
  jchar diag, jint m, jint n, jdouble alpha, jdoubleArray A, jint lda,
@@ -114,7 +115,7 @@ JNIEXPORT void Java_JAMAJni_QRDecomposition_dtrsm
      
      The matrix X is overwritten on B.*/
     
-    double *aElems, *bElems;
+/*    double *aElems, *bElems;
     
     aElems = (*env)-> GetDoubleArrayElements (env,A, NULL);
     bElems = (*env)-> GetDoubleArrayElements (env,B, NULL);
@@ -127,5 +128,7 @@ JNIEXPORT void Java_JAMAJni_QRDecomposition_dtrsm
     (*env)-> ReleaseDoubleArrayElements (env, B, bElems, 0);
     (*env)-> ReleaseDoubleArrayElements (env, A, aElems, JNI_ABORT);
     
-}
+    return;
+    
+}*/
 

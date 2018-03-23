@@ -1089,6 +1089,10 @@ public class Matrix implements Cloneable, java.io.Serializable {
                                     int Diag, int m, int n, double alpha,
                                     double[] A, double[] B);
     
+    public static native void dtrsm(int Layout, int Side, int Uplo, int TransA,
+                                    int Diag, int m, int n, double alpha,
+                                    double[] A, double[] B);
+    
     public static native void dsymm(int Layout, int Side, int Uplo, int m, int n,
                                     double alpha, double[] A, double[] B,
                                     double beta, double[] C);

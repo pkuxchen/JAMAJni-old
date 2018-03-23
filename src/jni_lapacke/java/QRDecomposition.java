@@ -1,5 +1,5 @@
 package JAMAJni;
-
+import JAMAJni.*;
 /** QR Decomposition.
  <P>
     For an m-by-n matrix A with m >= n, the QR decomposition is an m-by-n
@@ -17,6 +17,7 @@ public class QRDecomposition implements java.io.Serializable {
  static {
     /* load library (which will contain wrapper for lapacke function.)*/
     System.loadLibrary("lapacke_QRDecomposition");
+    System.loadLibrary("blas_lite"); //dtrsm
  }
      
     /* ------------------------
@@ -126,7 +127,7 @@ public class QRDecomposition implements java.io.Serializable {
         char transa = QRDecomposition.TRANSPOSE.NoTrans;
         char diag = QRDecomposition.DIAG.NoUnit;
         double one = 1.0;
-        dtrsm(side, uplo, transa, diag, m, n, one, QR, lda, b, ldb );
+        Matrix.dtrsm(Matrix.LAYOUT.ColMajor, Matrix.SIDE.Left, Matrix.UPLO.Upper, Matrix.TRANSPOSE.NoTrans, Matrix.DIAG.NonUnit, m, n, one, QR, b);
         
         Matrix C = new Matrix(b, B.getRowDimension());
         return C;
@@ -206,9 +207,9 @@ public class QRDecomposition implements java.io.Serializable {
                                     int m, int n, int k, double[] a, int lda, double[] tau,
                                     double[] c, int ldc);
     
-    public static native void dtrsm(char side, char uplo, char transa, char diag,
+/*    public static native void dtrsm(char side, char uplo, char transa, char diag,
                                    int m, int n, double alpha, double[] a, int lda,
-                                   double[] b, int ldb);
+                                   double[] b, int ldb);*/
 
     private static final long serialVersionUID = 1;
     /**inform java virtual machine that function is defined externally*/
