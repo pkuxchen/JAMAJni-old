@@ -42,6 +42,11 @@ extern void dsymm_(char *side, char *uplo, int *m, int *n, double *alpha,
                    double *A, int *lda, double *B, int *ldb, double *beta,
                    double *C, int *ldc);
 
+extern void dtrsm_(char *side, char *uplo, char *transa, char *diag, int *m,
+                   int *n, double *alpha, double *A, int *lda, double *B,
+                   int *ldb);
+
+
 #define jniRowMajor 101
 #define jniColMajor 102
 
@@ -467,12 +472,74 @@ JNIEXPORT void Java_JAMAJni_Matrix_dsymm
 }
 
 
-
-
-
-
-
-
+JNIEXPORT void Java_JAMAJni_Matrix_dtrsm
+(JNIEnv *env, jclass klass, jint Layout, jint Side, jint Uplo, jint TransA,
+ jint Diag, jint m, jint n, jdouble alpha, jdoubleArray  A, jdoubleArray B){
+    
+    /* dtrmm: performs one of the matrix-matrix operations
+     B := alpha*op( A )*B,   or   B := alpha*B*op( A )
+     where  alpha  is a scalar,  B  is an m by n matrix,  A  is a unit, or
+     non-unit,  upper or lower triangular matrix  and  op( A )  is one  of
+     op( A ) = A   or   op( A ) = A**T.*/
+    
+    double *aElems, *bElems;
+    
+    int lda;
+    char side, uplo, TA, diag;
+    
+    if (TransA == jniNoTrans) {TA = 'N';}
+    else if (TransA == jniTrans) {TA = 'T';}
+    else if (TransA == jniConjTrans) {TA = 'C';}
+    else {fprintf(stderr, "** Illegal TransA setting \n"); return;}
+    
+    if (Diag == jniNonUnit) {diag = 'N';}
+    else if (Diag == jniUnit) {diag = 'U';}
+    else {fprintf(stderr, "** Illegal Diag setting \n"); return;}
+    
+    if (Layout == jniRowMajor){
+        
+        if (Side == jniLeft){ side = 'R'; lda = m;}        //
+        else if(Side == jniRight){side = 'L'; lda = n;}    //
+        else{fprintf(stderr, "** Illegal Side setting \n"); return;}
+        
+        if (Uplo == jniUpper){ uplo = 'L';}                //
+        else if(Uplo == jniLower){ uplo = 'U';}
+        else{fprintf(stderr, "** Illegal Uplo setting \n"); return;}
+        
+        aElems = (*env)-> GetDoubleArrayElements (env,A, NULL);
+        bElems = (*env)-> GetDoubleArrayElements (env,B, NULL);
+        
+        assert(aElems && bElems);
+        
+        dtrsm_(&side, &uplo, &TA, &diag, &n, &m, &alpha, aElems, &lda,
+               bElems, &n);
+        
+    }
+    else if(Layout == jniColMajor){
+        
+        if (Side == jniLeft){ side = 'L'; lda = m;}        //
+        else if(Side == jniRight){side = 'R'; lda = n;}    //
+        else{fprintf(stderr, "** Illegal Side setting \n"); return;}
+        
+        if (Uplo == jniUpper){ uplo = 'U';}                //
+        else if(Uplo == jniLower){ uplo = 'L';}
+        else{fprintf(stderr, "** Illegal Uplo setting \n"); return;}
+        
+        aElems = (*env)-> GetDoubleArrayElements (env,A, NULL);
+        bElems = (*env)-> GetDoubleArrayElements (env,B, NULL);
+        
+        assert(aElems && bElems);
+        
+        dtrsm_(&side, &uplo, &TA, &diag, &m, &n, &alpha, aElems, &lda,
+               bElems, &m);
+        
+    }
+    else{fprintf(stderr, "** Illegal Matrix_Layout setting \n"); return;}
+    
+    (*env)-> ReleaseDoubleArrayElements (env, B, bElems, 0);
+    (*env)-> ReleaseDoubleArrayElements (env, A, aElems, JNI_ABORT);
+    
+}
 
 
 
