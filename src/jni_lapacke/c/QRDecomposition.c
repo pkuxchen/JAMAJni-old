@@ -2,9 +2,9 @@
 #include <assert.h>
 #include <lapacke.h>
 
-extern void dtrmm_(char *side, char *uplo, char *transa, char *diag, int *m,
+/*extern void dtrsm_(char *side, char *uplo, char *transa, char *diag, int *m,
                    int *n, double *alpha, double *A, int *lda, double *B,
-                   int *ldb);
+                   int *ldb);*/
 
 JNIEXPORT jint Java_JAMAJni_QRDecomposition_dgeqrf (JNIEnv *env, jclass klass, jint matrix_layout,
                                                     jint m, jint n, jdoubleArray a, jint lda,
@@ -69,6 +69,7 @@ JNIEXPORT jint Java_JAMAJni_QRDecomposition_dgeqp3  (JNIEnv *env, jclass klass, 
     (*env)-> ReleaseDoubleArrayElements (env, tau, tauElems, 0);
     (*env)-> ReleaseIntArrayElements (env, jpvt, jpvtElems, 0);
     
+    return info;
 }
 
 JNIEXPORT jint Java_JAMAJni_QRDecomposition_dormqr
@@ -98,34 +99,4 @@ JNIEXPORT jint Java_JAMAJni_QRDecomposition_dormqr
     
 }
 
-JNIEXPORT void Java_JAMAJni_QRDecomposition_dtrsm
-(JNIEnv *env, jclass klass, jchar side, jchar uplo, jchar transa,
- jchar diag, jint m, jint n, jdouble alpha, jdoubleArray A, jint lda,
- jdoubleArray B, jint ldb){
-    
-    /*  DTRSM  solves one of the matrix equations
-     
-     op( A )*X = alpha*B,   or   X*op( A ) = alpha*B,
-     
-     where alpha is a scalar, X and B are m by n matrices, A is a unit, or
-     non-unit,  upper or lower triangular matrix  and  op( A )  is one  of
-     
-     op( A ) = A   or   op( A ) = A**T.
-     
-     The matrix X is overwritten on B.*/
-    
-    double *aElems, *bElems;
-    
-    aElems = (*env)-> GetDoubleArrayElements (env,A, NULL);
-    bElems = (*env)-> GetDoubleArrayElements (env,B, NULL);
-    
-    assert(aElems && bElems);
-    
-    dtrsm_(&side, &uplo, &transa, &diag, &m, &n, &alpha, aElems, &lda,
-           bElems, &ldb);
-    
-    (*env)-> ReleaseDoubleArrayElements (env, B, bElems, 0);
-    (*env)-> ReleaseDoubleArrayElements (env, A, aElems, JNI_ABORT);
-    
-}
 
