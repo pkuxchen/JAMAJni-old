@@ -3,23 +3,12 @@
 
 Build Instructions
 ------------------
-#### JAMAJni
 
-* JAMAJni requires the installation of lapacke and cblas.
+* JAMAJni requires the installation of lapacke, blas, lapacke and cblas.
 
-* To compile the package, go to the folder src/JAMAJni, find the Makefile and run "make" on the command line. Notice that you may have to change the extension of generated libraries in the Makefile base on your operating system. On OS X you have to change all the extensions of dynamic library to .dylib while on Linux the corresponding extensions are .so or .a. 
+* To compile the package, enter src directory and execute "make". Notice that you may have to change the extension of generated libraries in the Makefile base on your operating system. On OS X you have to change all the extensions of dynamic library to .dylib while on Linux the corresponding extensions are .so or .a. 
 
 * To clean generated file, type “make clean” on the command line.  
-
-
-
-#### JAMAJni
-
-* JAMAJni requires the installation of lapack and blas. 
-
-* To compile the package, go to the folder src/, find the Makefile and run "make" on the command line. Notice that you may have to change the extension of generated libraries in the Makefile base on your operating system. On OS X you have to change all the extensions of dynamic library to .dylib while on Linux the corresponding extensions are .so or .a. 
-
-* To clean generated file, type “make clean” on the command line. 
 
 
 Running the tests
@@ -40,10 +29,6 @@ JAMAJni's source-code repository is hosted here on GitHub.
 Authors
 ---------
 
-
-
-
-#### JAMAJni
 | Name   | Email       |              |
 |:------ |:----------- | :----------- |
 | Zijie Zhao (maintainer)| zijzhao@ucla.edu    | Visiting student, Department of Biostatistics  UCLA|
