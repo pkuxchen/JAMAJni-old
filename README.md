@@ -1,4 +1,4 @@
-<b>JAMAJni</b> is a JAVA package providing a java interface for lapack and blas library and using the classes defined by JAMA Package. It's a tool for numericallinear algebra computations.
+<b>JAMAJni</b> is a JAVA package providing a java interface for lapack and blas library and using the classes defined by JAMA Package. It's a tool for numerical linear algebra computations.
 
 
 Build Instructions
@@ -13,7 +13,7 @@ Build Instructions
 
 Running the tests
 -----------------
-For testing, change directory to test/, then type “make” to run the test files. If you want to clean testing results and all class files, type "make clean".  
+For testing, enter test directory and execute “make” . If you want to clean testing results and all class files, type "make clean".  
 
 
 Notes
