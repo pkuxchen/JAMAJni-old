@@ -31,9 +31,10 @@ Authors
 
 | Name   | Email       |              |
 |:------ |:----------- | :----------- |
-| Zijie Zhao | zijzhao@ucla.edu    | Visiting student, Department of Biostatistics  UCLA|
-| Lu Zhang (maintainer)| lu.zhang@ucla.edu        | PhD student, Department of Biostatistics UCLA  |                             
+| Xiang Chen | pkuchenxiang@pku.edu.cn   | Visiting student, Department of Biostatistics  UCLA|
+| Lu Zhang (maintainer)| lu.zhang@ucla.edu    | PhD student, Department of Biostatistics UCLA  |                             
 | Sudipto Banerjee |sudipto@ucla.edu   | Professor, Department of Biostatistics  UCLA |
+<!---| Zijie Zhao | zijzhao@ucla.edu    | Visiting student, Department of Biostatistics  UCLA| --->
                              
 
 
