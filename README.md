@@ -14,7 +14,7 @@ Build Instructions
 Running the tests
 -----------------
 For testing, enter test directory and execute “make” . If you want to clean testing results and all class files, type "make clean".  
-
+There are four test files. The "JAMAjniTest.java" will test all the methods in JAMAJni package and report the errors. The "JAMAExamples.java" will provide specific examples for basic linear algebra operations. It can clearly show you how to use methods defined in JAMAJni. If you are interested in how to use functions in blas and lapack library to do matrix operations, the "JAMAJniExamplesCBLAS.java" and "JAMAJniExamplesLAPACKE.java" will give you specific examples. However, it is not necessary to go into blas and lapack if you just want to use JAMAJni to do some operations.
 
 Notes
 ---------
