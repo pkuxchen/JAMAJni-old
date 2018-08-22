@@ -4,7 +4,7 @@
 Build Instructions
 ------------------
 
-* JAMAJni requires the installation of lapacke, blas, lapacke and cblas.
+* JAMAJni requires the installation of lapack, blas, lapacke and cblas.
 
 * To compile the package, enter src directory and execute "make". Notice that you may have to change the extension of generated libraries in the Makefile base on your operating system. On OS X you have to change all the extensions of dynamic library to .dylib while on Linux the corresponding extensions are .so or .a. 
 
