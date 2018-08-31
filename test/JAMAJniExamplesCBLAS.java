@@ -129,7 +129,7 @@ public final class JAMAJniExamplesCBLAS {
         //incY = 1
 
         transA = Matrix.TRANSPOSE.Trans;
-        Matrix.dgemv(LAYOUT, transA, M, M, alpha, dotd, dotr, 1, beta, doti, 1);
+        Matrix.dgemv(LAYOUT, transA, M, M, alpha, dotd, M, dotr, 1, beta, doti, 1);
         RprintMatrix("Result: y = ", doti, M, 1);
 
         //dtrmv
@@ -152,7 +152,7 @@ public final class JAMAJniExamplesCBLAS {
         //x = xd
         //incX = 1
 
-        Matrix.dtrmv(LAYOUT, uplo, transA, diag, K, trid, xd, 1);
+        Matrix.dtrmv(LAYOUT, uplo, transA, diag, K, trid, K, xd, 1);
         RprintMatrix("Result: x = ", xd, K, 1);
 
         //dsymv
@@ -179,7 +179,7 @@ public final class JAMAJniExamplesCBLAS {
         //y = yd
         //incy = 1
 
-        Matrix.dsymv(LAYOUT, uplo, K, alpha, symfulld, xd, 1, beta, yd, 1);
+        Matrix.dsymv(LAYOUT, uplo, K, alpha, symfulld, K, xd, 1, beta, yd, 1);
         RprintMatrix("Result: x = ", yd, K, 1);
         
 
@@ -216,7 +216,7 @@ public final class JAMAJniExamplesCBLAS {
         //c = Cd
         //ldc = M
 
-        Matrix.dgemm(LAYOUT, transA, transB, M, N, K, alphad, dA, Bd, betad, Cd);
+        Matrix.dgemm(LAYOUT, transA, transB, M, N, K, alphad, dA, M, Bd, K, betad, Cd, M);
         CprintMatrix("Resulting C", Cd, M, N);
 
         //dtrmm
@@ -243,7 +243,7 @@ public final class JAMAJniExamplesCBLAS {
         //b = myad
         //ldb = K
 
-        Matrix.dtrmm(LAYOUT, side, uplo, transA, diag, K, M, alphad, trid, myad);
+        Matrix.dtrmm(LAYOUT, side, uplo, transA, diag, K, M, alphad, trid, K, myad, K);
         CprintMatrix("Resulting C", myad, K, M);
 
         //dtrsm
@@ -271,7 +271,7 @@ public final class JAMAJniExamplesCBLAS {
         //b = myad
         //ldb = K
 
-        Matrix.dtrsm(LAYOUT, side, uplo, transA, diag, K, M, alphad, solvetrid, myad);
+        Matrix.dtrsm(LAYOUT, side, uplo, transA, diag, K, M, alphad, solvetrid, K, myad, K);
         CprintMatrix("Solution X = ", myad, K, M);
 
         //dsymm
@@ -299,7 +299,7 @@ public final class JAMAJniExamplesCBLAS {
         //c = dA
         //ldc = K
 
-        Matrix.dsymm(LAYOUT, side, uplo, K, M, alphad, symfulld, cpdA, betad, dA);
+        Matrix.dsymm(LAYOUT, side, uplo, K, M, alphad, symfulld, K, cpdA, K, betad, dA, K);
         CprintMatrix("Resulting C", dA, K, M);
     }
 
