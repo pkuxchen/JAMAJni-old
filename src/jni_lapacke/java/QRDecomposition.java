@@ -17,7 +17,7 @@ public class QRDecomposition implements java.io.Serializable {
  static {
     /* load library (which will contain wrapper for lapacke function.)*/
     System.loadLibrary("lapacke_QRDecomposition");
-    System.loadLibrary("blas_lite"); //dtrsm
+    System.loadLibrary("cblas_Matrix"); //dtrsm
  }
      
     /* ------------------------
@@ -127,7 +127,7 @@ public class QRDecomposition implements java.io.Serializable {
         char transa = QRDecomposition.TRANSPOSE.NoTrans;
         char diag = QRDecomposition.DIAG.NoUnit;
         double one = 1.0;
-        Matrix.dtrsm(Matrix.LAYOUT.ColMajor, Matrix.SIDE.Left, Matrix.UPLO.Upper, Matrix.TRANSPOSE.NoTrans, Matrix.DIAG.NonUnit, m, n, one, QR, b);
+        Matrix.dtrsm(Matrix.LAYOUT.ColMajor, Matrix.SIDE.Left, Matrix.UPLO.Upper, Matrix.TRANSPOSE.NoTrans, Matrix.DIAG.NonUnit, m, n, one, QR, lda, b, ldb);
         
         Matrix C = new Matrix(b, B.getRowDimension());
         return C;
