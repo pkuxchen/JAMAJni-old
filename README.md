@@ -1,4 +1,4 @@
-<b>JAMAJni</b> is a JAVA package providing a java interface for lapack and blas library and using the classes defined by JAMA Package. It's a tool for numerical linear algebra computations. JAMAJni calls an intermediate c interface - cblas and lapacke - which requires previous installation. So you have to install cblas and lapacke first (detailed installation instructions are listed below). 
+<b>JAMAJni</b> is a JAVA package providing a java interface for lapack and blas library and using the classes defined by JAMA Package. It's a tool for numerical linear algebra computations. JAMAJni calls an intermediate c interface - cblas and - lapacke which requires previous installation. (Detailed installation instructions are listed below). 
 
 
 Build Instructions
