@@ -1,556 +1,2177 @@
-//
-//  main.c
-//  CBLAS
-//
-//  Created by Lu Zhang on 5/8/16.
-//  Copyright © 2016 Lu Zhang. All rights reserved.
-//
-
-
-#include <jni.h>
 #include <assert.h>
-/*#include <Matrix.h>*/
-
-/* Calling fortran blas from libblas */
-
-extern void dscal_(int *n, double *alpha, double *a, int *incx);
-
-extern void daxpy_(int *n, double *alpha, double *x, int *incx,
-                   double *y, int *incy);
-
-extern double ddot_(int *n, double *x, int *incx, double *y, int *incy);
-
-extern void dgemv_(char *trans, int *m, int *n, double *alpha, double *A,
-                   int *lda, double *x, int *incx, double *beta,
-                   double *y, int *incy);
-
-extern void dtrmv_(char *uplo, char *trans, char *diag, int *n, double *A,
-                   int *lda, double *x, int *incx);
-
-extern void dsymv_(char *uplo, int *n, double *alpha, double *A, int *lda,
-                   double *x, int *incx, double *beta, double *y, int *incy);
-
-extern void dgemm_(char *transa, char *transb,int *m, int *n,
-                   int *k, double *alpha, double *A, int *lda,
-                   double *B, int *ldb, double *beta, double *C, int *ldc);
-
-extern void dtrmm_(char *side, char *uplo, char *transa, char *diag, int *m,
-                   int *n, double *alpha, double *A, int *lda, double *B,
-                   int *ldb);
-
-extern void dsymm_(char *side, char *uplo, int *m, int *n, double *alpha,
-                   double *A, int *lda, double *B, int *ldb, double *beta,
-                   double *C, int *ldc);
-
-extern void dtrsm_(char *side, char *uplo, char *transa, char *diag, int *m,
-                   int *n, double *alpha, double *A, int *lda, double *B,
-                   int *ldb);
+#include <jni.h>
+#include "cblas.h"
 
 
-#define jniRowMajor 101
-#define jniColMajor 102
+// sdsdot: sdsdot = alpha+ inner product of vector x and y
+JNIEXPORT jfloat JNICALL Java_JAMAJni_Matrix_sdsdot
+  (JNIEnv *env, jclass obj, jint n, jfloat alpha, jfloatArray jx, jint incx, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && y);
 
-#define jniNoTrans 111
-#define jniTrans   112
-#define jniConjTrans    113
+  float result = cblas_sdsdot(n, alpha, x, incx, y, incy);
+  
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,JNI_ABORT);
 
-#define jniUpper   121
-#define jniLower   122
-
-#define jniNonUnit 131
-#define jniUnit    132
-
-#define jniLeft    141
-#define jniRight   142
-
-/* Level 1: dscal, daxpy, ddot */
-
-JNIEXPORT void Java_JAMAJni_Matrix_dscal
-(JNIEnv *env, jclass klass, jint n, jdouble alpha, jdoubleArray x, jint incx){
-    
-    /* dscal:  x = alpha * x */
-    
-    double *xElems;
-    xElems = (*env)-> GetDoubleArrayElements (env, x, NULL);
-    assert(xElems);
-    
-    dscal_(&n, &alpha, xElems, &incx);
-    
-    (*env)-> ReleaseDoubleArrayElements (env, x, xElems, 0);
+  return result;
 }
 
 
-JNIEXPORT void Java_JAMAJni_Matrix_daxpy
-(JNIEnv *env, jclass klass, jint n, jdouble alpha, jdoubleArray x,
- jint incx, jdoubleArray y, jint incy){
-    
-    /* daxpy: y = alpha * x + y */
-    
-    double *xElems, *yElems;
-    xElems = (*env)-> GetDoubleArrayElements (env, x, NULL);
-    yElems = (*env)-> GetDoubleArrayElements (env, y, NULL);
-    assert(xElems && yElems);
-    
-    daxpy_(&n, &alpha, xElems, &incx, yElems, &incy);
-    
-    (*env)-> ReleaseDoubleArrayElements (env, y, yElems, 0); 
-    (*env)-> ReleaseDoubleArrayElements (env, x, xElems, JNI_ABORT);
+// dsdot: dsdot = inner product of vector x and y
+// x and y are single precision, the output is double precision
+JNIEXPORT jdouble JNICALL Java_JAMAJni_Matrix_dsdot
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && y);
+
+  double result = cblas_dsdot(n, x, incx, y, incy);
+  
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,JNI_ABORT);
+
+  return result;
 }
 
-JNIEXPORT jdouble Java_JAMAJni_Matrix_ddot
-(JNIEnv *env, jclass klass, jint n, jdoubleArray x, jint incx,
- jdoubleArray y, jint incy){
-    
-    /* ddot:  forms the dot product of two vectors x and y.*/
-    
-    double *xElems, *yElems ;
-    double result;
-    
-    xElems = (*env)-> GetDoubleArrayElements (env, x, NULL);
-    yElems = (*env)-> GetDoubleArrayElements (env, y, NULL);
-    assert(xElems && yElems);
-    
-    result = ddot_(&n, xElems, &incx, yElems, &incy);
-    
-    (*env)-> ReleaseDoubleArrayElements (env, y, yElems, JNI_ABORT);
-    (*env)-> ReleaseDoubleArrayElements (env, x, xElems, JNI_ABORT);
-    
-    return result;
+// sdot: sdot = inner product of vector x and y
+JNIEXPORT jfloat JNICALL Java_JAMAJni_Matrix_sdot
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && y);
+
+  float result = cblas_sdot(n, x, incx, y, incy);
+  
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,JNI_ABORT);
+
+  return result;
 }
 
-/* Level 2: dgemv, dtrmv, dsymv */
+//note: x, y, and the output are all double precision
+JNIEXPORT jdouble JNICALL Java_JAMAJni_Matrix_ddot
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(x && y);
 
-JNIEXPORT void Java_JAMAJni_Matrix_dgemv
-(JNIEnv *env, jclass klass, jint Layout, jint Trans, jint m, jint n,
- jdouble alpha, jdoubleArray A, jdoubleArray x, jint incx, jdouble beta,
- jdoubleArray y, jint incy){
-    
-    /* DGEMV  performs one of the matrix-vector operations
-     y := alpha*A*x + beta*y,   or   y := alpha*A**T*x + beta*y, */
-    
-    double *AElems, *xElems, *yElems;
-    char Ts;
-    
-    if (Layout == jniRowMajor){
-        
-        if (Trans == jniNoTrans) {Ts = 'T';}
-        else if (Trans == jniTrans) {Ts = 'N';}
-        else if (Trans == jniConjTrans) {Ts = 'N';}
-        else {fprintf(stderr, "** Illegal Trans setting \n"); return;}
-        
-        AElems = (*env)-> GetDoubleArrayElements (env, A, NULL);
-        xElems = (*env)-> GetDoubleArrayElements (env, x, NULL);
-        yElems = (*env)-> GetDoubleArrayElements (env, y, NULL);
-        assert(AElems && xElems && yElems);
+  double result = cblas_ddot(n, x, incx, y, incy);
+  
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,JNI_ABORT);
 
-        dgemv_(&Ts, &n, &m, &alpha, AElems, &n, xElems, &incx, &beta,
-               yElems, &incy);
-        
-    }
-    else if(Layout == jniColMajor){
-        
-        if (Trans == jniNoTrans) {Ts = 'N';}
-        else if (Trans == jniTrans) {Ts = 'T';}
-        else if (Trans == jniConjTrans) {Ts = 'C';}
-        else {fprintf(stderr, "** Illegal Trans setting \n"); return;}
-        
-        AElems = (*env)-> GetDoubleArrayElements (env, A, NULL);
-        xElems = (*env)-> GetDoubleArrayElements (env, x, NULL);
-        yElems = (*env)-> GetDoubleArrayElements (env, y, NULL);
-        assert(AElems && xElems && yElems);
-
-        dgemv_(&Ts, &m, &n, &alpha, AElems, &m, xElems, &incx, &beta,
-               yElems, &incy);
-        
-    }
-    else {fprintf(stderr, "** Illegal Matrix_Layout setting \n"); return;}
-    
-    (*env)-> ReleaseDoubleArrayElements (env, y, yElems, 0);
-    (*env)-> ReleaseDoubleArrayElements (env, x, xElems, JNI_ABORT);
-    (*env)-> ReleaseDoubleArrayElements (env, A, AElems, JNI_ABORT);
-}
-
-JNIEXPORT void Java_JAMAJni_Matrix_dtrmv
-(JNIEnv *env, jclass klass, jint Layout, jint Uplo, jint Trans, jint Diag,
- jint n, jdoubleArray A, jdoubleArray x, jint incx){
-    
-    /*  DTRMV  performs one of the matrix-vector operations
-     x := A*x,   or   x := A**T*x,
-     where x is an n element vector and  A is an n by n unit, or non-unit,
-     upper or lower triangular matrix. */
-    
-    // LDA specifies the first dimension of A; lda = n
-    
-    char Ts, uplo, diag;
-    
-    if (Diag == jniNonUnit) {diag = 'N';}
-    else if (Diag == jniUnit) {diag = 'U';}
-    else {fprintf(stderr, "** Illegal Diag setting \n"); return;}
-    
-    if (Layout == jniRowMajor){
-        
-        if (Trans == jniNoTrans) {Ts = 'T';}
-        else if (Trans == jniTrans) {Ts = 'N';}
-        else if (Trans == jniConjTrans) {Ts = 'N';}
-        else {fprintf(stderr, "** Illegal Trans setting \n"); return;}
-        
-        if (Uplo == jniUpper) {uplo = 'L';}                // A is an upper triangular matrix.
-        else if (Uplo == jniLower) {uplo = 'U';}           // A is a lower triangular matrix
-        else {fprintf(stderr, "** Illegal Uplo setting \n"); return;}
-        
-    }
-    else if(Layout == jniColMajor){
-        
-        if (Trans == jniTrans) {Ts = 'T';}
-        else if (Trans == jniNoTrans) {Ts = 'N';}
-        else if (Trans == jniConjTrans) {Ts = 'C';}
-        else {fprintf(stderr, "** Illegal Trans setting \n"); return;}
-        
-        if (Uplo == jniUpper) {uplo = 'U';}                // A is an upper triangular matrix.
-        else if (Uplo == jniLower) {uplo = 'L';}           // A is a lower triangular matrix
-        else {fprintf(stderr, "** Illegal Uplo setting \n"); return;}
-    
-    }
-    else{fprintf(stderr, "** Illegal Matrix_Layout setting \n"); return;}
-    
-    double *AElems, *xElems;
-    
-    AElems = (*env)-> GetDoubleArrayElements (env, A, NULL);
-    xElems = (*env)-> GetDoubleArrayElements (env, x, NULL);
-    
-    assert(AElems && xElems);
-    
-    dtrmv_(&uplo, &Ts, &diag, &n, AElems, &n, xElems, &incx);
-    
-    (*env)-> ReleaseDoubleArrayElements (env, x, xElems, 0);
-    (*env)-> ReleaseDoubleArrayElements (env, A, AElems, JNI_ABORT);
-}
-
-JNIEXPORT void Java_JAMAJni_Matrix_dsymv
-(JNIEnv *env, jclass klass, jint Layout, jint Uplo, jint n, jdouble alpha,
- jdoubleArray A, jdoubleArray x, jint incx, jdouble beta,
- jdoubleArray y, int incy){
-    
-    /*  DSYMV  performs the matrix-vector  operation
-     y := alpha*A*x + beta*y
-     where alpha and beta are scalars, x and y are n element vectors and
-     A is an n by n symmetric matrix */
-    char uplo;
-    
-    // LDA specifies the first dimension of A; lda = n
-    if (Layout == jniRowMajor){
-        
-        //(switch 'U' and 'L' if input is row-major)
-        if (Uplo == jniUpper) {uplo = 'L';}                // A is an upper triangular matrix.
-        else if (Uplo == jniLower) {uplo = 'U';}           // A is a lower triangular matrix
-        else {fprintf(stderr, "** Illegal Uplo setting \n"); return;}
-    }
-    else if (Layout == jniColMajor) {
-        
-        if (Uplo == jniUpper) {uplo = 'U';}                // A is an upper triangular matrix.
-        else if (Uplo == jniLower) {uplo = 'L';}           // A is a lower triangular matrix
-        else {fprintf(stderr, "** Illegal Uplo setting \n"); return;}
-    }
-    else{fprintf(stderr, "** Illegal Matrix_Layout setting \n"); return;}
-    
-    double *AElems, *xElems, *yElems;
-    
-    AElems = (*env)-> GetDoubleArrayElements (env, A, NULL);
-    xElems = (*env)-> GetDoubleArrayElements (env, x, NULL);
-    yElems = (*env)-> GetDoubleArrayElements (env, y, NULL);
-    
-    assert(AElems && xElems && yElems);
-    
-    dsymv_(&uplo, &n, &alpha, AElems, &n, xElems, &incx, &beta, yElems, &incy);
-    
-    (*env)-> ReleaseDoubleArrayElements (env, y, yElems, 0);
-    (*env)-> ReleaseDoubleArrayElements (env, x, xElems, JNI_ABORT);
-    (*env)-> ReleaseDoubleArrayElements (env, A, AElems, JNI_ABORT);
-    
+  return result;
 }
 
 
-/* Level 3: dgemm, dtrmm, dsymm */
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_cdotu_1sub
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx, jfloatArray jy, jint incy, jfloatArray jdotu)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  jfloat *dotu = (*env)->GetFloatArrayElements(env,jdotu,NULL);
+  assert(x && y && dotu);
+  
+  cblas_cdotu_sub(n,x,incx,y,incy,dotu);
 
-JNIEXPORT void Java_JAMAJni_Matrix_dgemm
-(JNIEnv *env, jclass klass, jint Layout, jint TransA, jint TransB, jint m,
- jint n, jint k, jdouble alpha, jdoubleArray  A, jdoubleArray B,
- jdouble beta, jdoubleArray C){
-    /* DGEMM  performs one of the matrix-matrix operations
-     C := alpha*op( A )*op( B ) + beta*C,
-     where  op( X ) is one of op( X ) = X   or   op( X ) = X**T,
-     alpha and beta are scalars, and A, B and C are matrices, with op( A )
-     an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix. */
-    
-    double *aElems, *bElems, *cElems;
-    int lda, ldb;
-    char TA, TB;
-    
-    if (Layout == jniRowMajor){
-        
-        // if is row-major; switch A and B;
-        // swith m and n; alter the value of transa and transb
-        if (TransA == jniNoTrans) {TA = 'N'; lda = k;}
-        else if (TransA == jniTrans) {TA = 'T'; lda = m;}
-        else if (TransA == jniConjTrans) {TA = 'C'; lda = m;}
-        else {fprintf(stderr, "** Illegal TransA setting \n"); return;}
-        
-        if (TransB == jniNoTrans) { TB = 'N'; ldb = n;}
-        else if (TransB == jniTrans) {TB = 'T'; ldb = k;}
-        else if (TransB == jniConjTrans) {TB = 'C'; ldb = k;}
-        else {fprintf(stderr, "** Illegal TransB setting \n"); return;}
-        
-        aElems = (*env)-> GetDoubleArrayElements (env,A,NULL);
-        bElems = (*env)-> GetDoubleArrayElements (env,B,NULL);
-        cElems = (*env)-> GetDoubleArrayElements (env,C,NULL);
-        
-        assert(aElems && bElems && cElems);
-
-        dgemm_(&TB, &TA, &n, &m, &k, &alpha, bElems, &ldb, aElems, &lda, &beta,
-               cElems, &n);
-        
-    }
-    else if(Layout == jniColMajor){
-        
-        if (TransA == jniNoTrans) { TA = 'N'; lda = m;}
-        else if (TransA == jniTrans) {TA = 'T'; lda = k;}
-        else if (TransA == jniConjTrans) {TA = 'C'; lda = k;}
-        else {fprintf(stderr, "** Illegal TransA setting \n"); return;}
-        
-        if (TransB == jniNoTrans) { TB = 'N'; ldb = k;}
-        else if (TransB == jniTrans) { TB = 'T'; ldb = n;}
-        else if (TransB == jniConjTrans) {TB = 'C'; ldb = n;}
-        else {fprintf(stderr, "** Illegal TransB setting \n"); return;}
-        
-        aElems = (*env)-> GetDoubleArrayElements (env,A,NULL);
-        bElems = (*env)-> GetDoubleArrayElements (env,B,NULL);
-        cElems = (*env)-> GetDoubleArrayElements (env,C,NULL);
-        
-        assert(aElems && bElems && cElems);
-        
-        dgemm_(&TA, &TB, &m, &n, &k, &alpha, aElems, &lda, bElems, &ldb,
-               &beta, cElems, &m);
-        
-    }
-    else{fprintf(stderr, "** Illegal Matrix_Layout setting \n"); return;}
-    
-    (*env)-> ReleaseDoubleArrayElements (env, C, cElems, 0);
-    (*env)-> ReleaseDoubleArrayElements (env, B, bElems, JNI_ABORT);
-    (*env)-> ReleaseDoubleArrayElements (env, A, aElems, JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jdotu,dotu,0);
 }
 
 
-JNIEXPORT void Java_JAMAJni_Matrix_dtrmm
-(JNIEnv *env, jclass klass, jint Layout, jint Side, jint Uplo, jint TransA,
- jint Diag, jint m, jint n, jdouble alpha, jdoubleArray  A, jdoubleArray B){
-    
-    /* dtrmm: performs one of the matrix-matrix operations
-     B := alpha*op( A )*B,   or   B := alpha*B*op( A )
-     where  alpha  is a scalar,  B  is an m by n matrix,  A  is a unit, or
-     non-unit,  upper or lower triangular matrix  and  op( A )  is one  of
-     op( A ) = A   or   op( A ) = A**T.*/
-    
-    double *aElems, *bElems;
-    
-    int lda;
-    char side, uplo, TA, diag;
-    
-    if (TransA == jniNoTrans) {TA = 'N';}
-    else if (TransA == jniTrans) {TA = 'T';}
-    else if (TransA == jniConjTrans) {TA = 'C';}
-    else {fprintf(stderr, "** Illegal TransA setting \n"); return;}
-    
-    if (Diag == jniNonUnit) {diag = 'N';}
-    else if (Diag == jniUnit) {diag = 'U';}
-    else {fprintf(stderr, "** Illegal Diag setting \n"); return;}
-    
-    if (Layout == jniRowMajor){
-        
-        if (Side == jniLeft){ side = 'R'; lda = m;}        // B := alpha*op( A )*B
-        else if(Side == jniRight){side = 'L'; lda = n;}    // B := alpha*B*op( A )
-        else{fprintf(stderr, "** Illegal Side setting \n"); return;}
-        
-        if (Uplo == jniUpper){ uplo = 'L';}                // B := alpha*op( A )*B
-        else if(Uplo == jniLower){ uplo = 'U';}
-        else{fprintf(stderr, "** Illegal Uplo setting \n"); return;}
-        
-        aElems = (*env)-> GetDoubleArrayElements (env,A, NULL);
-        bElems = (*env)-> GetDoubleArrayElements (env,B, NULL);
-        
-        assert(aElems && bElems);
-        
-        dtrmm_(&side, &uplo, &TA, &diag, &n, &m, &alpha, aElems, &lda,
-               bElems, &n);
-        
-    }
-    else if(Layout == jniColMajor){
-        
-        if (Side == jniLeft){ side = 'L'; lda = m;}        // B := alpha*op( A )*B
-        else if(Side == jniRight){side = 'R'; lda = n;}    // B := alpha*B*op( A )
-        else{fprintf(stderr, "** Illegal Side setting \n"); return;}
-        
-        if (Uplo == jniUpper){ uplo = 'U';}                // B := alpha*op( A )*B
-        else if(Uplo == jniLower){ uplo = 'L';}
-        else{fprintf(stderr, "** Illegal Uplo setting \n"); return;}
-        
-        aElems = (*env)-> GetDoubleArrayElements (env,A, NULL);
-        bElems = (*env)-> GetDoubleArrayElements (env,B, NULL);
-        
-        assert(aElems && bElems);
-        
-        dtrmm_(&side, &uplo, &TA, &diag, &m, &n, &alpha, aElems, &lda,
-               bElems, &m);
-        
-    }
-    else{fprintf(stderr, "** Illegal Matrix_Layout setting \n"); return;}
-    
-    (*env)-> ReleaseDoubleArrayElements (env, B, bElems, 0);
-    (*env)-> ReleaseDoubleArrayElements (env, A, aElems, JNI_ABORT);
-    
-}
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_cdotc_1sub
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx, jfloatArray jy, jint incy, jfloatArray jdotc)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  jfloat *dotc = (*env)->GetFloatArrayElements(env,jdotc,NULL);
+  assert(x && y && dotc);
 
-JNIEXPORT void Java_JAMAJni_Matrix_dsymm
-(JNIEnv *env, jclass klass, jint Layout, jint Side, jint Uplo,
- jint m, jint n, jdouble alpha, jdoubleArray  A, jdoubleArray B,
- jdouble beta, jdoubleArray C){
-    
-    /*DSYMM  performs one of the matrix-matrix operations:
-     C := alpha*A*B + beta*C, or C := alpha*B*A + beta*C,
-     where A is a symmetric matrix and  B and C are  m by n matrices.*/
-    
-    double *aElems, *bElems, *cElems;
-    int lda;
-    char side, uplo;
-    
-    if (Layout == jniRowMajor){
-        
-        if (Side == jniLeft){ side = 'R'; lda = m;}        // C := alpha*A*B + beta*C
-        else if(Side == jniRight){side = 'L'; lda = n;}
-        else{fprintf(stderr, "** Illegal Side setting \n"); return;}
-        
-        if (Uplo == jniUpper){ uplo = 'L';}
-        // Only the upper triangular part of A is to be referenced
+  cblas_cdotc_sub(n,x,incx,y,incy,dotc);
 
-        else if(Uplo == jniLower){ uplo = 'U';}
-        // Only the lower triangular part of B is to be referenced
-        else{fprintf(stderr, "** Illegal Uplo setting \n"); return;}
-        
-        aElems = (*env)-> GetDoubleArrayElements (env,A, NULL);
-        bElems = (*env)-> GetDoubleArrayElements (env,B, NULL);
-        cElems = (*env)-> GetDoubleArrayElements (env,C, NULL);
-        
-        assert(aElems && bElems && cElems);
-        
-        dsymm_(&side, &uplo, &n, &m, &alpha, aElems, &lda, bElems, &n, &beta, cElems, &n);
-        
-    }
-    else if(Layout == jniColMajor){
-        
-        if (Side == jniLeft){ side = 'L'; lda = m;}        // C := alpha*A*B + beta*C
-        else if(Side == jniRight){side = 'R'; lda = n;}    //
-        else{fprintf(stderr, "** Illegal Side setting \n"); return;}
-        
-        if (Uplo == jniUpper){ uplo = 'U';}                // B := alpha*op( A )*B
-        else if(Uplo == jniLower){ uplo = 'L';}
-        else{fprintf(stderr, "** Illegal Uplo setting \n"); return;}
-        
-        aElems = (*env)-> GetDoubleArrayElements (env,A, NULL);
-        bElems = (*env)-> GetDoubleArrayElements (env,B, NULL);
-        cElems = (*env)-> GetDoubleArrayElements (env,C, NULL);
-        
-        assert(aElems && bElems && cElems);
-        dsymm_(&side, &uplo, &m, &n, &alpha, aElems, &lda, bElems, &m, &beta,
-               cElems, &m);
-        
-    }
-    else{fprintf(stderr, "** Illegal Matrix_Layout setting \n");}
-    
-    (*env)-> ReleaseDoubleArrayElements (env, C, cElems, 0);
-    (*env)-> ReleaseDoubleArrayElements (env, A, aElems, JNI_ABORT);
-    (*env)-> ReleaseDoubleArrayElements (env, B, bElems, JNI_ABORT);
-    
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jdotc,dotc,0);
 }
 
 
-JNIEXPORT void Java_JAMAJni_Matrix_dtrsm
-(JNIEnv *env, jclass klass, jint Layout, jint Side, jint Uplo, jint TransA,
- jint Diag, jint m, jint n, jdouble alpha, jdoubleArray  A, jdoubleArray B){
-    
-    /* dtrmm: performs one of the matrix-matrix operations
-     B := alpha*op( A )*B,   or   B := alpha*B*op( A )
-     where  alpha  is a scalar,  B  is an m by n matrix,  A  is a unit, or
-     non-unit,  upper or lower triangular matrix  and  op( A )  is one  of
-     op( A ) = A   or   op( A ) = A**T.*/
-    
-    double *aElems, *bElems;
-    
-    int lda;
-    char side, uplo, TA, diag;
-    
-    if (TransA == jniNoTrans) {TA = 'N';}
-    else if (TransA == jniTrans) {TA = 'T';}
-    else if (TransA == jniConjTrans) {TA = 'C';}
-    else {fprintf(stderr, "** Illegal TransA setting \n"); return;}
-    
-    if (Diag == jniNonUnit) {diag = 'N';}
-    else if (Diag == jniUnit) {diag = 'U';}
-    else {fprintf(stderr, "** Illegal Diag setting \n"); return;}
-    
-    if (Layout == jniRowMajor){
-        
-        if (Side == jniLeft){ side = 'R'; lda = m;}        //
-        else if(Side == jniRight){side = 'L'; lda = n;}    //
-        else{fprintf(stderr, "** Illegal Side setting \n"); return;}
-        
-        if (Uplo == jniUpper){ uplo = 'L';}                //
-        else if(Uplo == jniLower){ uplo = 'U';}
-        else{fprintf(stderr, "** Illegal Uplo setting \n"); return;}
-        
-        aElems = (*env)-> GetDoubleArrayElements (env,A, NULL);
-        bElems = (*env)-> GetDoubleArrayElements (env,B, NULL);
-        
-        assert(aElems && bElems);
-        
-        dtrsm_(&side, &uplo, &TA, &diag, &n, &m, &alpha, aElems, &lda,
-               bElems, &n);
-        
-    }
-    else if(Layout == jniColMajor){
-        
-        if (Side == jniLeft){ side = 'L'; lda = m;}        //
-        else if(Side == jniRight){side = 'R'; lda = n;}    //
-        else{fprintf(stderr, "** Illegal Side setting \n"); return;}
-        
-        if (Uplo == jniUpper){ uplo = 'U';}                //
-        else if(Uplo == jniLower){ uplo = 'L';}
-        else{fprintf(stderr, "** Illegal Uplo setting \n"); return;}
-        
-        aElems = (*env)-> GetDoubleArrayElements (env,A, NULL);
-        bElems = (*env)-> GetDoubleArrayElements (env,B, NULL);
-        
-        assert(aElems && bElems);
-        
-        dtrsm_(&side, &uplo, &TA, &diag, &m, &n, &alpha, aElems, &lda,
-               bElems, &m);
-        
-    }
-    else{fprintf(stderr, "** Illegal Matrix_Layout setting \n"); return;}
-    
-    (*env)-> ReleaseDoubleArrayElements (env, B, bElems, 0);
-    (*env)-> ReleaseDoubleArrayElements (env, A, aElems, JNI_ABORT);
-    
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zdotu_1sub
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy, jdoubleArray jdotu)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  jdouble *dotu = (*env)->GetDoubleArrayElements(env,jdotu,NULL);
+  assert(x && y && dotu);
+
+  cblas_zdotu_sub(n,x,incx,y,incy,dotu);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jdotu,dotu,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zdotc_1sub
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy, jdoubleArray jdotc)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  jdouble *dotc = (*env)->GetDoubleArrayElements(env,jdotc,NULL);
+  assert(x && y && dotc);
+  
+  cblas_zdotc_sub(n,x,incx,y,incy,dotc);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jdotc,dotc,0);
+}
+
+
+JNIEXPORT jfloat JNICALL Java_JAMAJni_Matrix_snrm2
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(x);
+  
+  float result = cblas_snrm2(n, x, incx);
+  
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  
+  return result;
+}
+
+
+JNIEXPORT jfloat JNICALL Java_JAMAJni_Matrix_sasum
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(x);
+
+  float result = cblas_sasum(n, x, incx);
+  
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  
+  return result;
+}
+
+
+JNIEXPORT jdouble JNICALL Java_JAMAJni_Matrix_dnrm2
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray jx, jint incx)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(x);
+  
+  double result = cblas_dnrm2(n, x, incx);
+  
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  
+  return result;
+}
+
+
+JNIEXPORT jdouble JNICALL Java_JAMAJni_Matrix_dasum
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray jx, jint incx)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(x);
+  
+  double result = cblas_dasum(n, x, incx);
+  
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  
+  return result;
+}
+
+
+JNIEXPORT jfloat JNICALL Java_JAMAJni_Matrix_scnrm2
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(x);
+  
+  float result = cblas_scnrm2(n,x,incx);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  
+  return result;
+}
+
+
+JNIEXPORT jfloat JNICALL Java_JAMAJni_Matrix_scasum
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(x);
+  
+  float result = cblas_scasum(n,x,incx);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  
+  return result;
+}
+
+
+JNIEXPORT jdouble JNICALL Java_JAMAJni_Matrix_dznrm2
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray jx, jint incx)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(x);
+  
+  double result = cblas_dznrm2(n,x,incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  
+  return result;
+}
+
+
+JNIEXPORT jdouble JNICALL Java_JAMAJni_Matrix_dzasum
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray jx, jint incx)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(x);
+  
+  double result = cblas_dzasum(n,x,incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  
+  return result;
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_sswap
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && y);
+
+  cblas_sswap(n,x,incx,y,incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_scopy
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && y);
+
+  cblas_scopy(n,x,incx,y,incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_saxpy
+  (JNIEnv *env, jclass obj, jint n, jfloat a, jfloatArray jx, jint incx, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+
+  cblas_saxpy(n,a,x,incx,y,incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dswap
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(x && y);
+
+  cblas_dswap(n,x,incx,y,incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dcopy
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(x && y);
+
+  cblas_dcopy(n,x,incx,y,incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_daxpy
+  (JNIEnv *env, jclass obj, jint n, jdouble a, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(x && y);
+
+  cblas_daxpy(n,a,x,incx,y,incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_cswap
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && y);
+  
+  cblas_cswap(n,x,incx,y,incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ccopy
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && y);
+  
+  cblas_ccopy(n,x,incx,y,incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+}
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_caxpy
+  (JNIEnv *env, jclass obj, jint n, jfloatArray ja, jfloatArray jx, jint incx, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  assert(x && y && a);
+  
+  cblas_caxpy(n,a,x,incx,y,incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zswap
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(x && y);
+
+  cblas_zswap(n,x,incx,y,incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zcopy
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(x && y);
+
+  cblas_zcopy(n,x,incx,y,incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zaxpy
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray ja, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  assert(x && y && a);
+
+  cblas_zaxpy(n,a,x,incx,y,incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_srotg
+  (JNIEnv *env, jclass obj, jfloatArray ja, jfloatArray jb, jfloatArray jc, jfloatArray js)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *b = (*env)->GetFloatArrayElements(env,jb,NULL);
+  jfloat *c = (*env)->GetFloatArrayElements(env,jc,NULL);
+  jfloat *s = (*env)->GetFloatArrayElements(env,js,NULL);
+  assert(a && b && c && s);
+  
+  cblas_srotg(a,b,c,s);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,0);
+  (*env)->ReleaseFloatArrayElements(env,jb,b,0);
+  (*env)->ReleaseFloatArrayElements(env,jc,c,0);
+  (*env)->ReleaseFloatArrayElements(env,js,s,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_srotmg
+  (JNIEnv *env, jclass obj, jfloatArray jsd1, jfloatArray jsd2, jfloatArray jsx1, jfloat sy1, jfloatArray jsparam)
+{
+  jfloat *sd1 = (*env)->GetFloatArrayElements(env,jsd1,NULL);
+  jfloat *sd2 = (*env)->GetFloatArrayElements(env,jsd2,NULL);
+  jfloat *sx1 = (*env)->GetFloatArrayElements(env,jsx1,NULL);
+  jfloat *sparam = (*env)->GetFloatArrayElements(env,jsparam,NULL);
+  assert(sd1 && sd2 && sx1 && sparam);
+  
+  cblas_srotmg(sd1,sd2,sx1,sy1,sparam);
+
+  (*env)->ReleaseFloatArrayElements(env,jsd1,sd1,0);
+  (*env)->ReleaseFloatArrayElements(env,jsd2,sd2,0);
+  (*env)->ReleaseFloatArrayElements(env,jsx1,sx1,0);
+  (*env)->ReleaseFloatArrayElements(env,jsparam,sparam,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_srot
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx, jfloatArray jy, jint incy, jfloat c, jfloat s)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && y);
+
+  cblas_srot(n,x,incx,y,incy,c,s); 
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_srotm
+  (JNIEnv *env, jclass obj, jint n, jfloatArray jx, jint incx, jfloatArray jy, jint incy, jfloatArray jsparam)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  jfloat *sparam = (*env)->GetFloatArrayElements(env,jsparam,NULL);
+  assert(x && y && sparam);
+
+  cblas_srotm(n,x,incx,y,incy,sparam); 
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+  (*env)->ReleaseFloatArrayElements(env,jsparam,sparam,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_drotg
+  (JNIEnv *env, jclass obj, jdoubleArray ja, jdoubleArray jb, jdoubleArray jc, jdoubleArray js)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *b = (*env)->GetDoubleArrayElements(env,jb,NULL);
+  jdouble *c = (*env)->GetDoubleArrayElements(env,jc,NULL);
+  jdouble *s = (*env)->GetDoubleArrayElements(env,js,NULL);
+  assert(a && b && c && s);
+  
+  cblas_drotg(a,b,c,s);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,0);
+  (*env)->ReleaseDoubleArrayElements(env,jb,b,0);
+  (*env)->ReleaseDoubleArrayElements(env,jc,c,0);
+  (*env)->ReleaseDoubleArrayElements(env,js,s,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_drotmg
+  (JNIEnv *env, jclass obj, jdoubleArray jdd1, jdoubleArray jdd2, jdoubleArray jdx1, jdouble dy1, jdoubleArray jdparam)
+{
+  jdouble *dd1 = (*env)->GetDoubleArrayElements(env,jdd1,NULL);
+  jdouble *dd2 = (*env)->GetDoubleArrayElements(env,jdd2,NULL);
+  jdouble *dx1 = (*env)->GetDoubleArrayElements(env,jdx1,NULL);
+  jdouble *dparam = (*env)->GetDoubleArrayElements(env,jdparam,NULL);
+  assert(dd1 && dd2 && dx1 && dparam);
+  
+  cblas_drotmg(dd1,dd2,dx1,dy1,dparam);
+
+  (*env)->ReleaseDoubleArrayElements(env,jdd1,dd1,0);
+  (*env)->ReleaseDoubleArrayElements(env,jdd2,dd2,0);
+  (*env)->ReleaseDoubleArrayElements(env,jdx1,dx1,0);
+  (*env)->ReleaseDoubleArrayElements(env,jdparam,dparam,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_drot
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy, jdouble c, jdouble s)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(x && y);
+
+  cblas_drot(n,x,incx,y,incy,c,s); 
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_drotm
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy, jdoubleArray jdparam)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  jdouble *dparam = (*env)->GetDoubleArrayElements(env,jdparam,NULL);
+  assert(x && y && dparam);
+  
+  cblas_drotm(n,x,incx,y,incy,dparam); 
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+  (*env)->ReleaseDoubleArrayElements(env,jdparam,dparam,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_sscal
+  (JNIEnv *env, jclass obj, jint n, jfloat a, jfloatArray jx, jint incx)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(x);
+  
+  cblas_sscal(n,a,x,incx);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dscal
+  (JNIEnv *env, jclass obj, jint n, jdouble a, jdoubleArray jx, jint incx)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(x);
+  
+  cblas_dscal(n,a,x,incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_cscal
+  (JNIEnv *env, jclass obj, jint n, jfloatArray ja, jfloatArray jx, jint incx)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  assert(x && a);
+
+  cblas_cscal(n,a,x,incx);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zscal
+  (JNIEnv *env, jclass obj, jint n, jdoubleArray ja, jdoubleArray jx, jint incx)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  assert(x && a);
+  
+  cblas_zscal(n,a,x,incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_csscal
+  (JNIEnv *env, jclass obj, jint n, jfloat a, jfloatArray jx, jint incx)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(x);
+
+  cblas_csscal(n,a,x,incx);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zdscal
+  (JNIEnv *env, jclass obj, jint n, jdouble a, jdoubleArray jx, jint incx)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(x);
+  
+  cblas_zdscal(n,a,x,incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_sgemv
+  (JNIEnv *env, jclass obj, jint order, jint transA, jint m, jint n, jfloat alpha, jfloatArray ja, jint lda, jfloatArray jx, jint incx, jfloat beta, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && a && y);
+  
+  cblas_sgemv((CBLAS_ORDER) order,(CBLAS_TRANSPOSE) transA, m, n, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_sgbmv
+  (JNIEnv *env, jclass obj, jint order, jint transA, jint m, jint n, jint kl, jint ku, jfloat alpha, jfloatArray ja, jint lda, jfloatArray jx, jint incx, jfloat beta, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && a && y);
+  
+  cblas_sgbmv((CBLAS_ORDER) order,(CBLAS_TRANSPOSE) transA, m, n, kl, ku, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_strmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jfloatArray ja, jint lda, jfloatArray jx, jint incx)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  assert(x && a);
+
+  cblas_strmv((CBLAS_ORDER) order,(CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, lda, x, incx);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_stbmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jint k, jfloatArray ja, jint lda, jfloatArray jx, jint incx)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  assert(x && a);
+
+  cblas_stbmv((CBLAS_ORDER) order,(CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, k, a, lda, x, incx);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_stpmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jfloatArray ja, jfloatArray jx, jint incx)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  assert(x && a);
+
+  cblas_stpmv((CBLAS_ORDER) order,(CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, x, incx);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_strsv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jfloatArray ja, jint lda, jfloatArray jx, jint incx)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  assert(x && a);
+
+  cblas_strsv((CBLAS_ORDER) order,(CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, lda, x, incx);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_stbsv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jint k, jfloatArray ja, jint lda, jfloatArray jx, jint incx)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  assert(x && a);
+
+  cblas_stbsv((CBLAS_ORDER) order,(CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, k, a, lda, x, incx);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_stpsv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jfloatArray ja, jfloatArray jx, jint incx)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  assert(x && a);
+
+  cblas_stpsv((CBLAS_ORDER) order,(CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, x, incx);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dgemv
+  (JNIEnv *env, jclass obj, jint order, jint transA, jint m, jint n, jdouble alpha, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx, jdouble beta, jdoubleArray jy, jint incy)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(a && x && y);
+  
+  cblas_dgemv((CBLAS_ORDER) order, (CBLAS_TRANSPOSE) transA, m, n, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dgbmv
+  (JNIEnv *env, jclass obj, jint order, jint transA, jint m, jint n, jint kl, jint ku, jdouble alpha, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx, jdouble beta, jdoubleArray jy, jint incy)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(a && x && y);
+  
+  cblas_dgbmv((CBLAS_ORDER) order, (CBLAS_TRANSPOSE) transA, m, n, kl, ku, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dtrmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_dtrmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, lda, x, incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dtbmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jint k, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_dtbmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, k, a, lda, x, incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dtpmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jdoubleArray ja, jdoubleArray jx, jint incx)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_dtpmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, x, incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dtrsv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_dtrsv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, lda, x, incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dtbsv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jint k, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_dtbsv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, k, a, lda, x, incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dtpsv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jdoubleArray ja, jdoubleArray jx, jint incx)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_dtpsv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, x, incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_cgemv
+  (JNIEnv *env, jclass obj, jint order, jint transA, jint m, jint n, jfloatArray jalpha, jfloatArray ja, jint lda, jfloatArray jx, jint incx, jfloatArray jbeta, jfloatArray jy, jint incy)
+{
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *beta = (*env)->GetFloatArrayElements(env,jbeta,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(alpha && a && x && beta && y);
+  
+  cblas_cgemv((CBLAS_ORDER) order, (CBLAS_TRANSPOSE) transA, m, n, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);  
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_cgbmv
+  (JNIEnv *env, jclass obj, jint order, jint transA, jint m, jint n, jint kl, jint ku, jfloatArray jalpha, jfloatArray ja, jint lda, jfloatArray jx, jint incx, jfloatArray jbeta, jfloatArray jy, jint incy)
+{
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *beta = (*env)->GetFloatArrayElements(env,jbeta,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(alpha && a && x && beta && y);
+  
+  cblas_cgbmv((CBLAS_ORDER) order, (CBLAS_TRANSPOSE) transA, m, n, kl, ku, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);  
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ctrmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jfloatArray ja, jint lda, jfloatArray jx, jint incx)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_ctrmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, lda, x, incx);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ctbmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jint k, jfloatArray ja, jint lda, jfloatArray jx, jint incx)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_ctbmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, k, a, lda, x, incx);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ctpmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jfloatArray ja, jfloatArray jx, jint incx)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_ctpmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, x, incx);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ctrsv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jfloatArray ja, jint lda, jfloatArray jx, jint incx)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_ctrsv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, lda, x, incx);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ctbsv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jint k, jfloatArray ja, jint lda, jfloatArray jx, jint incx)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_ctbsv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, k, a, lda, x, incx);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ctpsv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jfloatArray ja, jfloatArray jx, jint incx)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_ctpsv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, x, incx);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zgemv
+  (JNIEnv *env, jclass obj, jint order, jint transA, jint m, jint n, jdoubleArray jalpha, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx, jdoubleArray jbeta, jdoubleArray jy, jint incy)
+{
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *beta = (*env)->GetDoubleArrayElements(env,jbeta,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(alpha && a && x && beta && y);
+  
+  cblas_zgemv((CBLAS_ORDER) order, (CBLAS_TRANSPOSE) transA, m, n, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);  
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zgbmv
+  (JNIEnv *env, jclass obj, jint order, jint transA, jint m, jint n, jint kl, jint ku, jdoubleArray jalpha, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx, jdoubleArray jbeta, jdoubleArray jy, jint incy)
+{
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *beta = (*env)->GetDoubleArrayElements(env,jbeta,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(alpha && a && x && beta && y);
+  
+  cblas_zgbmv((CBLAS_ORDER) order, (CBLAS_TRANSPOSE) transA, m, n, kl, ku, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);  
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ztrmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_ztrmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, lda, x, incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ztbmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jint k, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_ztbmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, k, a, lda, x, incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ztpmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jdoubleArray ja, jdoubleArray jx, jint incx)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_ztpmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, x, incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ztrsv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_ztrmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, lda, x, incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ztbsv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jint k, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_ztbsv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, k, a, lda, x, incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ztpsv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint transA, jint diag, jint n, jdoubleArray ja, jdoubleArray jx, jint incx)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_ztpsv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, n, a, x, incx);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ssymv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jfloat alpha, jfloatArray ja, jint lda, jfloatArray jx, jint incx, jfloat beta, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && a && y);
+  
+  cblas_ssymv((CBLAS_ORDER) order,(CBLAS_UPLO) uplo, n, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ssbmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jint k, jfloat alpha, jfloatArray ja, jint lda, jfloatArray jx, jint incx, jfloat beta, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && a && y);
+  
+  cblas_ssbmv((CBLAS_ORDER) order,(CBLAS_UPLO) uplo, n, k, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_sspmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jfloat alpha, jfloatArray ja, jfloatArray jx, jint incx, jfloat beta, jfloatArray jy, jint incy)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && a && y);
+
+  cblas_sspmv((CBLAS_ORDER) order,(CBLAS_UPLO) uplo, n, alpha, a, x, incx, beta, y, incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_sger
+  (JNIEnv *env, jclass obj, jint order, jint m, jint n, jfloat alpha, jfloatArray jx, jint incx, jfloatArray jy, jint incy, jfloatArray ja, jint lda)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && a && y);
+  
+  cblas_sger((CBLAS_ORDER) order, m, n, alpha, x, incx, y, incy, a, lda);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ssyr
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jfloat alpha, jfloatArray jx, jint incx, jfloatArray ja, jint lda)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  assert(x && a);
+
+  cblas_ssyr((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, a, lda);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_sspr
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jfloat alpha, jfloatArray jx, jint incx, jfloatArray ja)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  assert(x && a);
+  
+  cblas_sspr((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, a);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ssyr2
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jfloat alpha, jfloatArray jx, jint incx, jfloatArray jy, jint incy, jfloatArray ja, jint lda)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && a && y);
+  
+  cblas_ssyr2((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, y, incy, a, lda);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_sspr2
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jfloat alpha, jfloatArray jx, jint incx, jfloatArray jy, jint incy, jfloatArray ja)
+{
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(x && a && y);
+  
+  cblas_sspr2((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, y, incy, a);
+
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dsymv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jdouble alpha, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx, jdouble beta, jdoubleArray jy, jint incy)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(x && a && y);
+  
+  cblas_dsymv((CBLAS_ORDER) order,(CBLAS_UPLO) uplo, n, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dsbmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jint k, jdouble alpha, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx, jdouble beta, jdoubleArray jy, jint incy)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(x && a && y);
+  
+  cblas_dsbmv((CBLAS_ORDER) order,(CBLAS_UPLO) uplo, n, k, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dspmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jdouble alpha, jdoubleArray ja, jdoubleArray jx, jint incx, jdouble beta, jdoubleArray jy, jint incy)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(x && a && y);
+  
+  cblas_dspmv((CBLAS_ORDER) order,(CBLAS_UPLO) uplo, n, alpha, a, x, incx, beta, y, incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dger
+  (JNIEnv *env, jclass obj, jint order, jint m, jint n, jdouble alpha, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy, jdoubleArray ja, jint lda)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(x && a && y);
+  
+  cblas_dger((CBLAS_ORDER) order, m, n, alpha, x, incx, y, incy, a, lda);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dsyr
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jdouble alpha, jdoubleArray jx, jint incx, jdoubleArray ja, jint lda)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  assert(x && a);
+  
+  cblas_dsyr((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, a, lda);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,0);
+}
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dspr
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jdouble alpha, jdoubleArray jx, jint incx, jdoubleArray ja)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  assert(x && a);
+  
+  cblas_dspr((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, a);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dsyr2
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jdouble alpha, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy, jdoubleArray ja, jint lda)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(x && a && y);
+  
+  cblas_dsyr2((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, y, incy, a, lda);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dspr2
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jdouble alpha, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy, jdoubleArray ja)
+{
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(x && a && y);
+  
+  cblas_dspr2((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, y, incy, a);
+
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,0);
 }
 
 
 
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_chemv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jfloatArray jalpha, jfloatArray ja, jint lda, jfloatArray jx, jint incx, jfloatArray jbeta, jfloatArray jy, jint incy)
+{
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *beta = (*env)->GetFloatArrayElements(env,jbeta,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(alpha && a && x && beta && y);
+  
+  cblas_chemv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_chbmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jint k, jfloatArray jalpha, jfloatArray ja, jint lda, jfloatArray jx, jint incx, jfloatArray jbeta, jfloatArray jy, jint incy)
+{
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *beta = (*env)->GetFloatArrayElements(env,jbeta,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(alpha && a && x && beta && y);
+
+  cblas_chbmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, k, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_chpmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jfloatArray jalpha, jfloatArray ja, jfloatArray jx, jint incx, jfloatArray jbeta, jfloatArray jy, jint incy)
+{
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *beta = (*env)->GetFloatArrayElements(env,jbeta,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(alpha && a && x && beta && y);
+  
+  cblas_chpmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, a, x, incx, beta, y, incy);
+
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_cgeru
+  (JNIEnv *env, jclass obj, jint order, jint m, jint n, jfloatArray jalpha, jfloatArray jx, jint incx, jfloatArray jy, jint incy, jfloatArray ja, jint lda)
+{
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(alpha && a && x && y);
+  
+  cblas_cgeru((CBLAS_ORDER) order, m, n, alpha, x, incx, y, incy, a, lda);
+
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,0);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_cgerc
+  (JNIEnv *env, jclass obj, jint order, jint m, jint n, jfloatArray jalpha, jfloatArray jx, jint incx, jfloatArray jy, jint incy, jfloatArray ja, jint lda)
+{
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  assert(alpha && a && x && y);
+
+  cblas_cgerc((CBLAS_ORDER) order, m, n, alpha, x, incx, y, incy, a, lda);
+
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,0);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_cher
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jfloat alpha, jfloatArray jx, jint incx, jfloatArray ja, jint lda)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_cher((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, a, lda);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,0);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_chpr
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jfloat alpha, jfloatArray jx, jint incx, jfloatArray ja)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  assert(a && x);
+  
+  cblas_chpr((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, a);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,0);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_cher2
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jfloatArray jalpha, jfloatArray jx, jint incx, jfloatArray jy, jint incy, jfloatArray ja, jint lda)
+{
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  assert(alpha && x && y && a);
+  
+  cblas_cher2((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, y, incy, a, lda);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,0);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_chpr2
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jfloatArray jalpha, jfloatArray jx, jint incx, jfloatArray jy, jint incy, jfloatArray ja)
+{
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *x = (*env)->GetFloatArrayElements(env,jx,NULL);
+  jfloat *y = (*env)->GetFloatArrayElements(env,jy,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  assert(alpha && x && y && a);
+  
+  cblas_chpr2((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, y, incy, a);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,0);
+  (*env)->ReleaseFloatArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jy,y,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zhemv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jdoubleArray jalpha, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx, jdoubleArray jbeta, jdoubleArray jy, jint incy)
+{
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *beta = (*env)->GetDoubleArrayElements(env,jbeta,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(alpha && a && x && beta && y);
+
+  cblas_zhemv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zhbmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jint k, jdoubleArray jalpha, jdoubleArray ja, jint lda, jdoubleArray jx, jint incx, jdoubleArray jbeta, jdoubleArray jy, jint incy)
+{
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *beta = (*env)->GetDoubleArrayElements(env,jbeta,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(alpha && a && x && beta && y);
+  
+  cblas_zhbmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, k, alpha, a, lda, x, incx, beta, y, incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zhpmv
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jdoubleArray jalpha, jdoubleArray ja, jdoubleArray jx, jint incx, jdoubleArray jbeta, jdoubleArray jy, jint incy)
+{
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *beta = (*env)->GetDoubleArrayElements(env,jbeta,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(alpha && a && x && beta && y);
+  
+  cblas_zhpmv((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, a, x, incx, beta, y, incy);
+
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zgeru
+  (JNIEnv *env, jclass obj, jint order, jint m, jint n, jdoubleArray jalpha, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy, jdoubleArray ja, jint lda)
+{
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(alpha && a && x && y);
+
+  cblas_zgeru((CBLAS_ORDER) order, m, n, alpha, x, incx, y, incy, a, lda);
+
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,0);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zgerc
+  (JNIEnv *env, jclass obj, jint order, jint m, jint n, jdoubleArray jalpha, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy, jdoubleArray ja, jint lda)
+{
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  assert(alpha && a && x && y);
+  
+  cblas_zgerc((CBLAS_ORDER) order, m, n, alpha, x, incx, y, incy, a, lda);
+
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,0);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zher
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jdouble alpha, jdoubleArray jx, jint incx, jdoubleArray ja, jint lda)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+
+  cblas_zher((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, a, lda);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,0);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zhpr
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jdouble alpha, jdoubleArray jx, jint incx, jdoubleArray ja)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  assert(a && x);
+
+  cblas_zhpr((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, a);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,0);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zher2
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jdoubleArray jalpha, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy, jdoubleArray ja, jint lda)
+{
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  assert(alpha && x && y && a);
+  
+  cblas_zher2((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, y, incy, a, lda);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,0);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zhpr2
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint n, jdoubleArray jalpha, jdoubleArray jx, jint incx, jdoubleArray jy, jint incy, jdoubleArray ja)
+{
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *x = (*env)->GetDoubleArrayElements(env,jx,NULL);
+  jdouble *y = (*env)->GetDoubleArrayElements(env,jy,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  assert(alpha && x && y && a);
+  
+  cblas_zhpr2((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, n, alpha, x, incx, y, incy, a);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,0);
+  (*env)->ReleaseDoubleArrayElements(env,jx,x,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jy,y,JNI_ABORT);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_sgemm
+  (JNIEnv *env, jclass obj, jint order, jint transA, jint transB, jint m, jint n, jint k, jfloat alpha, jfloatArray ja, jint lda, jfloatArray jb, jint ldb, jfloat beta, jfloatArray jc, jint ldc)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *b = (*env)->GetFloatArrayElements(env,jb,NULL);
+  jfloat *c = (*env)->GetFloatArrayElements(env,jc,NULL);
+  assert(a && b && c);
+  
+  cblas_sgemm((CBLAS_ORDER) order, (CBLAS_TRANSPOSE) transA, (CBLAS_TRANSPOSE) transB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ssymm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint m, jint n, jfloat alpha, jfloatArray ja, jint lda, jfloatArray jb, jint ldb, jfloat beta, jfloatArray jc, jint ldc)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *b = (*env)->GetFloatArrayElements(env,jb,NULL);
+  jfloat *c = (*env)->GetFloatArrayElements(env,jc,NULL);
+  assert(a && b && c);
+  
+  cblas_ssymm((CBLAS_ORDER) order, (CBLAS_SIDE) side, (CBLAS_UPLO) uplo, m, n, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ssyrk
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint trans, jint n, jint k, jfloat alpha, jfloatArray ja, jint lda, jfloat beta, jfloatArray jc, jint ldc)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *c = (*env)->GetFloatArrayElements(env,jc,NULL);
+  assert(a && c);
+  
+  cblas_ssyrk((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) trans, n, k, alpha, a, lda, beta, c, ldc);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ssyr2k
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint trans, jint n, jint k, jfloat alpha, jfloatArray ja, jint lda, jfloatArray jb, jint ldb, jfloat beta, jfloatArray jc, jint ldc)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *b = (*env)->GetFloatArrayElements(env,jb,NULL);
+  jfloat *c = (*env)->GetFloatArrayElements(env,jc,NULL);
+  assert(a && b && c);
+  
+  cblas_ssyr2k((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) trans, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_strmm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint transA, jint diag, jint m, jint n, jfloat alpha, jfloatArray ja, jint lda, jfloatArray jb, jint ldb)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *b = (*env)->GetFloatArrayElements(env,jb,NULL);
+  assert(a && b);
+  
+  cblas_strmm((CBLAS_ORDER) order, (CBLAS_SIDE) side, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, m, n, alpha, a, lda, b, ldb);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jb,b,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_strsm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint transA, jint diag, jint m, jint n, jfloat alpha, jfloatArray ja, jint lda, jfloatArray jb, jint ldb)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *b = (*env)->GetFloatArrayElements(env,jb,NULL);
+  assert(a && b);
+  
+  cblas_strsm((CBLAS_ORDER) order, (CBLAS_SIDE) side, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, m, n, alpha, a, lda, b, ldb);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jb,b,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dgemm
+  (JNIEnv *env, jclass obj, jint order, jint transA, jint transB, jint m, jint n, jint k, jdouble alpha, jdoubleArray ja, jint lda, jdoubleArray jb, jint ldb, jdouble beta, jdoubleArray jc, jint ldc)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *b = (*env)->GetDoubleArrayElements(env,jb,NULL);
+  jdouble *c = (*env)->GetDoubleArrayElements(env,jc,NULL);
+  assert(a && b && c);
+  
+  cblas_dgemm((CBLAS_ORDER) order, (CBLAS_TRANSPOSE) transA, (CBLAS_TRANSPOSE) transB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dsymm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint m, jint n, jdouble alpha, jdoubleArray ja, jint lda, jdoubleArray jb, jint ldb, jdouble beta, jdoubleArray jc, jint ldc)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *b = (*env)->GetDoubleArrayElements(env,jb,NULL);
+  jdouble *c = (*env)->GetDoubleArrayElements(env,jc,NULL);
+  assert(a && b && c);
+  
+  cblas_dsymm((CBLAS_ORDER) order, (CBLAS_SIDE) side, (CBLAS_UPLO) uplo, m, n, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dsyrk
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint trans, jint n, jint k, jdouble alpha, jdoubleArray ja, jint lda, jdouble beta, jdoubleArray jc, jint ldc)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *c = (*env)->GetDoubleArrayElements(env,jc,NULL);
+  assert(a && c);
+  
+  cblas_dsyrk((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) trans, n, k, alpha, a, lda, beta, c, ldc);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dsyr2k
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint trans, jint n, jint k, jdouble alpha, jdoubleArray ja, jint lda, jdoubleArray jb, jint ldb, jdouble beta, jdoubleArray jc, jint ldc)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *b = (*env)->GetDoubleArrayElements(env,jb,NULL);
+  jdouble *c = (*env)->GetDoubleArrayElements(env,jc,NULL);
+  assert(a && b && c);
+  
+  cblas_dsyr2k((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) trans, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dtrmm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint transA, jint diag, jint m, jint n, jdouble alpha, jdoubleArray ja, jint lda, jdoubleArray jb, jint ldb)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *b = (*env)->GetDoubleArrayElements(env,jb,NULL);
+  assert(a && b);
+  
+  cblas_dtrmm((CBLAS_ORDER) order, (CBLAS_SIDE) side, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, m, n, alpha, a, lda, b, ldb);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jb,b,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_dtrsm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint transA, jint diag, jint m, jint n, jdouble alpha, jdoubleArray ja, jint lda, jdoubleArray jb, jint ldb)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *b = (*env)->GetDoubleArrayElements(env,jb,NULL);
+  assert(a && b);
+  
+  cblas_dtrsm((CBLAS_ORDER) order, (CBLAS_SIDE) side, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, m, n, alpha, a, lda, b, ldb);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jb,b,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_cgemm
+  (JNIEnv *env, jclass obj, jint order, jint transA, jint transB, jint m, jint n, jint k, jfloatArray jalpha, jfloatArray ja, jint lda, jfloatArray jb, jint ldb, jfloatArray jbeta, jfloatArray jc, jint ldc)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *b = (*env)->GetFloatArrayElements(env,jb,NULL);
+  jfloat *c = (*env)->GetFloatArrayElements(env,jc,NULL);
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *beta = (*env)->GetFloatArrayElements(env,jbeta,NULL);
+  assert(a && b && c && alpha && beta);
+  
+  cblas_cgemm((CBLAS_ORDER) order, (CBLAS_TRANSPOSE) transA, (CBLAS_TRANSPOSE) transB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_csymm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint m, jint n, jfloatArray jalpha, jfloatArray ja, jint lda, jfloatArray jb, jint ldb, jfloatArray jbeta, jfloatArray jc, jint ldc)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *b = (*env)->GetFloatArrayElements(env,jb,NULL);
+  jfloat *c = (*env)->GetFloatArrayElements(env,jc,NULL);
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *beta = (*env)->GetFloatArrayElements(env,jbeta,NULL);
+  assert(a && b && c && alpha && beta);
+  
+  cblas_csymm((CBLAS_ORDER) order, (CBLAS_SIDE) side, (CBLAS_UPLO) uplo, m, n, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_csyrk
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint trans, jint n, jint k, jfloatArray jalpha, jfloatArray ja, jint lda, jfloatArray jbeta, jfloatArray jc, jint ldc)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *c = (*env)->GetFloatArrayElements(env,jc,NULL);
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *beta = (*env)->GetFloatArrayElements(env,jbeta,NULL);
+  assert(a && c && alpha && beta);
+  
+  cblas_csyrk((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) trans, n, k, alpha, a, lda, beta, c, ldc);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_csyr2k
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint trans, jint n, jint k, jfloatArray jalpha, jfloatArray ja, jint lda, jfloatArray jb, jint ldb, jfloatArray jbeta, jfloatArray jc, jint ldc)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *b = (*env)->GetFloatArrayElements(env,jb,NULL);
+  jfloat *c = (*env)->GetFloatArrayElements(env,jc,NULL);
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *beta = (*env)->GetFloatArrayElements(env,jbeta,NULL);
+  assert(a && b && c && alpha && beta);
+  
+  cblas_csyr2k((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) trans, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ctrmm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint transA, jint diag, jint m, jint n, jfloatArray jalpha, jfloatArray ja, jint lda, jfloatArray jb, jint ldb)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *b = (*env)->GetFloatArrayElements(env,jb,NULL);
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  assert(a && b && alpha);
+  
+  cblas_ctrmm((CBLAS_ORDER) order, (CBLAS_SIDE) side, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, m, n, alpha, a, lda, b, ldb);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jb,b,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ctrsm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint transA, jint diag, jint m, jint n, jfloatArray jalpha, jfloatArray ja, jint lda, jfloatArray jb, jint ldb)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *b = (*env)->GetFloatArrayElements(env,jb,NULL);
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  assert(a && b && alpha);
+  
+  cblas_ctrsm((CBLAS_ORDER) order, (CBLAS_SIDE) side, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, m, n, alpha, a, lda, b, ldb);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jb,b,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zgemm
+  (JNIEnv *env, jclass obj, jint order, jint transA, jint transB, jint m, jint n, jint k, jdoubleArray jalpha, jdoubleArray ja, jint lda, jdoubleArray jb, jint ldb, jdoubleArray jbeta, jdoubleArray jc, jint ldc)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *b = (*env)->GetDoubleArrayElements(env,jb,NULL);
+  jdouble *c = (*env)->GetDoubleArrayElements(env,jc,NULL);
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *beta = (*env)->GetDoubleArrayElements(env,jbeta,NULL);
+  assert(a && b && c && alpha && beta);
+  
+  cblas_zgemm((CBLAS_ORDER) order, (CBLAS_TRANSPOSE) transA, (CBLAS_TRANSPOSE) transB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zsymm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint m, jint n, jdoubleArray jalpha, jdoubleArray ja, jint lda, jdoubleArray jb, jint ldb, jdoubleArray jbeta, jdoubleArray jc, jint ldc)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *b = (*env)->GetDoubleArrayElements(env,jb,NULL);
+  jdouble *c = (*env)->GetDoubleArrayElements(env,jc,NULL);
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *beta = (*env)->GetDoubleArrayElements(env,jbeta,NULL);
+  assert(a && b && c && alpha && beta);
+  
+  cblas_zsymm((CBLAS_ORDER) order, (CBLAS_SIDE) side, (CBLAS_UPLO) uplo, m, n, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zsyrk
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint trans, jint n, jint k, jdoubleArray jalpha, jdoubleArray ja, jint lda, jdoubleArray jbeta, jdoubleArray jc, jint ldc)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *c = (*env)->GetDoubleArrayElements(env,jc,NULL);
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *beta = (*env)->GetDoubleArrayElements(env,jbeta,NULL);
+  assert(a && c && alpha && beta);
+  
+  cblas_zsyrk((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) trans, n, k, alpha, a, lda, beta, c, ldc);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zsyr2k
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint trans, jint n, jint k, jdoubleArray jalpha, jdoubleArray ja, jint lda, jdoubleArray jb, jint ldb, jdoubleArray jbeta, jdoubleArray jc, jint ldc)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *b = (*env)->GetDoubleArrayElements(env,jb,NULL);
+  jdouble *c = (*env)->GetDoubleArrayElements(env,jc,NULL);
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *beta = (*env)->GetDoubleArrayElements(env,jbeta,NULL);
+  assert(a && b && c && alpha && beta);
+  
+  cblas_zsyr2k((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) trans, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ztrmm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint transA, jint diag, jint m, jint n, jdoubleArray jalpha, jdoubleArray ja, jint lda, jdoubleArray jb, jint ldb)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *b = (*env)->GetDoubleArrayElements(env,jb,NULL);
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  assert(a && b && alpha);
+  
+  cblas_ztrmm((CBLAS_ORDER) order, (CBLAS_SIDE) side, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, m, n, alpha, a, lda, b, ldb);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jb,b,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_ztrsm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint transA, jint diag, jint m, jint n, jdoubleArray jalpha, jdoubleArray ja, jint lda, jdoubleArray jb, jint ldb)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *b = (*env)->GetDoubleArrayElements(env,jb,NULL);
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  assert(a && b && alpha);
+  
+  cblas_ztrsm((CBLAS_ORDER) order, (CBLAS_SIDE) side, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) transA, (CBLAS_DIAG) diag, m, n, alpha, a, lda, b, ldb);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jb,b,0);
+}
 
 
 
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_chemm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint m, jint n, jfloatArray jalpha, jfloatArray ja, jint lda, jfloatArray jb, jint ldb, jfloatArray jbeta, jfloatArray jc, jint ldc)
+{
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *b = (*env)->GetFloatArrayElements(env,jb,NULL);
+  jfloat *beta = (*env)->GetFloatArrayElements(env,jbeta,NULL);
+  jfloat *c = (*env)->GetFloatArrayElements(env,jc,NULL);
+  assert(alpha && a && b && beta && c);
+  
+  cblas_chemm((CBLAS_ORDER) order, (CBLAS_SIDE)side, (CBLAS_UPLO) uplo, m, n, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jc,c,0);
+}
 
 
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_cherk
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint trans, jint n, jint k, jfloat alpha, jfloatArray ja, jint lda, jfloat beta, jfloatArray jc, jint ldc)
+{
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *c = (*env)->GetFloatArrayElements(env,jc,NULL);
+  assert(a && c);
+
+  cblas_cherk((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) trans, n, k, alpha, a, lda, beta, c, ldc);
+
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jc,c,0);
+}
 
 
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_cher2k
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint trans, jint n, jint k, jfloatArray jalpha, jfloatArray ja, jint lda, jfloatArray jb, jint ldb, jfloat beta, jfloatArray jc, jint ldc)
+{
+  jfloat *alpha = (*env)->GetFloatArrayElements(env,jalpha,NULL);
+  jfloat *a = (*env)->GetFloatArrayElements(env,ja,NULL);
+  jfloat *b = (*env)->GetFloatArrayElements(env,jb,NULL);
+  jfloat *c = (*env)->GetFloatArrayElements(env,jc,NULL);
+  assert(alpha && a && b && c);
+  
+  cblas_cher2k((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) trans, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseFloatArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseFloatArrayElements(env,jc,c,0);
+}
 
 
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zhemm
+  (JNIEnv *env, jclass obj, jint order, jint side, jint uplo, jint m, jint n, jdoubleArray jalpha, jdoubleArray ja, jint lda, jdoubleArray jb, jint ldb, jdoubleArray jbeta, jdoubleArray jc, jint ldc)
+{
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *b = (*env)->GetDoubleArrayElements(env,jb,NULL);
+  jdouble *beta = (*env)->GetDoubleArrayElements(env,jbeta,NULL);
+  jdouble *c = (*env)->GetDoubleArrayElements(env,jc,NULL);
+  assert(alpha && a && b && beta && c);
+
+  cblas_zhemm((CBLAS_ORDER) order, (CBLAS_SIDE)side, (CBLAS_UPLO) uplo, m, n, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jbeta,beta,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jc,c,0);
+}
 
 
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zherk
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint trans, jint n, jint k, jdouble alpha, jdoubleArray ja, jint lda, jdouble beta, jdoubleArray jc, jint ldc)
+{
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *c = (*env)->GetDoubleArrayElements(env,jc,NULL);
+  assert(a && c);
+  
+  cblas_zherk((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) trans, n, k, alpha, a, lda, beta, c, ldc);
+
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jc,c,0);
+}
+
+
+JNIEXPORT void JNICALL Java_JAMAJni_Matrix_zher2k
+  (JNIEnv *env, jclass obj, jint order, jint uplo, jint trans, jint n, jint k, jdoubleArray jalpha, jdoubleArray ja, jint lda, jdoubleArray jb, jint ldb, jdouble beta, jdoubleArray jc, jint ldc)
+{
+  jdouble *alpha = (*env)->GetDoubleArrayElements(env,jalpha,NULL);
+  jdouble *a = (*env)->GetDoubleArrayElements(env,ja,NULL);
+  jdouble *b = (*env)->GetDoubleArrayElements(env,jb,NULL);
+  jdouble *c = (*env)->GetDoubleArrayElements(env,jc,NULL);
+  assert(alpha && a && b && c);
+  
+  cblas_zher2k((CBLAS_ORDER) order, (CBLAS_UPLO) uplo, (CBLAS_TRANSPOSE) trans, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+
+  (*env)->ReleaseDoubleArrayElements(env,jalpha,alpha,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,ja,a,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jb,b,JNI_ABORT);
+  (*env)->ReleaseDoubleArrayElements(env,jc,c,0);
+}
