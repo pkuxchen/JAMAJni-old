@@ -35,7 +35,7 @@ Authors
 | Lu Zhang (maintainer)| lu.zhang@ucla.edu    | PhD student, Department of Biostatistics UCLA  |                             
 | Sudipto Banerjee | sudipto@ucla.edu   | Professor, Department of Biostatistics  UCLA |
 | Diyang Wu | wudiyangabc@hotmail.com    | MS student, Department of Biostatistics  UCLA|
-| Zijie Zhao | zijzhao@ucla.edu    | MS student, Department of Biostatistics Havard University|
+| Zijie Zhao | zijzhao@ucla.edu    | MS student, Department of Biostatistics Harvard University|
 <!--- --->
                              
 
