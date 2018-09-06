@@ -1,4 +1,7 @@
-<b>JAMAJni</b> is a JAVA package providing a java interface for lapack and blas library and using the classes defined by JAMA Package. It's a tool for numerical linear algebra computations. JAMAJni calls an intermediate c interface - cblas and - lapacke which requires previous installation. (Detailed installation instructions are listed below). 
+# JAMAJni
+* JAMAJni is a JAVA package providing a java interface for lapack and blas libraries and using the classes defined by JAMA Package. It's a tool for numerical linear algebra computations. JAMAJni calls an intermediate c interface - cblas and - lapacke which requires previous installation. (Detailed installation instructions are listed below). 
+
+* JAMAJni has a sibling package called JAMAJniLite, which calls lapack and blas libararies. You can find it on GitHub here.
 
 
 Build Instructions
@@ -13,8 +16,9 @@ Build Instructions
 
 Running the tests
 -----------------
-For testing, enter test directory and execute “make” . If you want to clean testing results and all class files, type "make clean".  
-There are four test files. The "JAMAjniTest.java" will test all the methods in JAMAJni package and report the errors. The "JAMAExamples.java" will provide specific examples for basic linear algebra operations. It can clearly show you how to use methods defined in JAMAJni. If you are interested in how to use functions in blas and lapack library to do matrix operations, the "JAMAJniExamplesCBLAS.java" and "JAMAJniExamplesLAPACKE.java" will give you specific examples. However, it is not necessary to go into blas and lapack if you just want to be a user of JAMAJni.
+* For testing, enter test directory and execute “make” . If you want to clean testing results and all class files, type "make clean".  
+
+* There are four test files. The "JAMAjniTest.java" will test all the methods in JAMAJni package and report the errors. The "JAMAExamples.java" will provide specific examples for basic linear algebra operations. It can clearly show you how to use methods defined in JAMAJni. If you are interested in how to use functions in blas and lapack library to do matrix operations, the "JAMAJniExamplesCBLAS.java" and "JAMAJniExamplesLAPACKE.java" will give you specific examples. However, it is not necessary to go into blas and lapack if you just want to be a user of JAMAJni.
 
 Notes
 ---------
