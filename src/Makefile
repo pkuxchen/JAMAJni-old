@@ -4,7 +4,6 @@ CFLAGS = $(INCLUDE) $(LIB)
 
 JAVA_HOME = ..
 
-JNI_LAPACK_SRC = $(JAVA_HOME)/src/jni_lapack
 JNI_CBLAS_SRC = $(JAVA_HOME)/src/jni_cblas
 JNI_LAPACKE_SRC = $(JAVA_HOME)/src/jni_lapacke
 JNI_UTIL = $(JAVA_HOME)/src/util
@@ -13,17 +12,17 @@ INCLUDE = -I$(JAVA_HOME)/include
 
 LIB = -L/usr/local/lib #-L/usr/local/lib64 -L/usr/lib 
 
-C_SRC_LAPACK1 = $(JNI_LAPACKE_SRC)/c/LUDecomposition.c 
-C_SRC_LAPACK2 = $(JNI_LAPACKE_SRC)/c/CholeskyDecomposition.c
-C_SRC_LAPACK3 = $(JNI_LAPACKE_SRC)/c/QRDecomposition.c
-C_SRC_LAPACK4 = $(JNI_LAPACKE_SRC)/c/EigenvalueDecomposition.c
-C_SRC_LAPACK5 = $(JNI_LAPACKE_SRC)/c/SingularValueDecomposition.c
+C_SRC_LAPACKE1 = $(JNI_LAPACKE_SRC)/c/LUDecomposition.c 
+C_SRC_LAPACKE2 = $(JNI_LAPACKE_SRC)/c/CholeskyDecomposition.c
+C_SRC_LAPACKE3 = $(JNI_LAPACKE_SRC)/c/QRDecomposition.c
+C_SRC_LAPACKE4 = $(JNI_LAPACKE_SRC)/c/EigenvalueDecomposition.c
+C_SRC_LAPACKE5 = $(JNI_LAPACKE_SRC)/c/SingularValueDecomposition.c
 C_SRC_CBLAS = $(JNI_CBLAS_SRC)/c/Matrix.c
-DYLIB_LAPACK1 = $(JAVA_HOME)/lib/liblapacke_LUDecomposition.so
-DYLIB_LAPACK2 = $(JAVA_HOME)/lib/liblapacke_CholeskyDecomposition.so
-DYLIB_LAPACK3 = $(JAVA_HOME)/lib/liblapacke_QRDecomposition.so
-DYLIB_LAPACK4 = $(JAVA_HOME)/lib/liblapacke_EigenvalueDecomposition.so
-DYLIB_LAPACK5 = $(JAVA_HOME)/lib/liblapacke_SingularValueDecomposition.so
+DYLIB_LAPACKE1 = $(JAVA_HOME)/lib/liblapacke_LUDecomposition.so
+DYLIB_LAPACKE2 = $(JAVA_HOME)/lib/liblapacke_CholeskyDecomposition.so
+DYLIB_LAPACKE3 = $(JAVA_HOME)/lib/liblapacke_QRDecomposition.so
+DYLIB_LAPACKE4 = $(JAVA_HOME)/lib/liblapacke_EigenvalueDecomposition.so
+DYLIB_LAPACKE5 = $(JAVA_HOME)/lib/liblapacke_SingularValueDecomposition.so
 DYLIB_CBLAS = $(JAVA_HOME)/lib/libcblas_Matrix.so
 	
 
@@ -34,30 +33,30 @@ JAVA_SRC = $(JNI_UTIL)/Maths.java $(JNI_LAPACKE_SRC)/java/LUDecomposition.java $
 PACKAGE = $(JAVA_HOME)/class/*
 
 
-all: $(PACKAGE) $(DYLIB_LAPACK1) $(DYLIB_LAPACK2) $(DYLIB_LAPACK3) $(DYLIB_LAPACK4) $(DYLIB_LAPACK5) $(DYLIB_CBLAS)
+all: $(PACKAGE) $(DYLIB_LAPACKE1) $(DYLIB_LAPACKE2) $(DYLIB_LAPACKE3) $(DYLIB_LAPACKE4) $(DYLIB_LAPACKE5) $(DYLIB_CBLAS)
 
 $(PACKAGE): $(JAVA_SRC)
 	@mkdir -p $(@D)
 	$(JC) $(JFLAGS) $(JAVA_HOME)/class $(JAVA_SRC)
 
-$(DYLIB_LAPACK1): $(C_SRC_LAPACK1)
+$(DYLIB_LAPACKE1): $(C_SRC_LAPACKE1)
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -shared -fPIC $(C_SRC_LAPACK1) -llapacke -lcblas -o $(DYLIB_LAPACK1)
+	$(CC) $(CFLAGS) -shared -fPIC $(C_SRC_LAPACKE1) -llapacke -lcblas -o $(DYLIB_LAPACKE1)
 
-$(DYLIB_LAPACK2): $(C_SRC_LAPACK2)
+$(DYLIB_LAPACKE2): $(C_SRC_LAPACKE2)
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -shared -fPIC $(C_SRC_LAPACK2) -llapacke -lcblas -o $(DYLIB_LAPACK2)
-$(DYLIB_LAPACK3): $(C_SRC_LAPACK3)
+	$(CC) $(CFLAGS) -shared -fPIC $(C_SRC_LAPACKE2) -llapacke -lcblas -o $(DYLIB_LAPACKE2)
+$(DYLIB_LAPACKE3): $(C_SRC_LAPACKE3)
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -shared -fPIC $(C_SRC_LAPACK3) -llapacke -lcblas -o $(DYLIB_LAPACK3)
+	$(CC) $(CFLAGS) -shared -fPIC $(C_SRC_LAPACKE3) -llapacke -lcblas -o $(DYLIB_LAPACKE3)
 
-$(DYLIB_LAPACK4): $(C_SRC_LAPACK4)
+$(DYLIB_LAPACKE4): $(C_SRC_LAPACKE4)
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -shared -fPIC $(C_SRC_LAPACK4) -llapacke -lcblas -o $(DYLIB_LAPACK4)
+	$(CC) $(CFLAGS) -shared -fPIC $(C_SRC_LAPACKE4) -llapacke -lcblas -o $(DYLIB_LAPACKE4)
 
-$(DYLIB_LAPACK5): $(C_SRC_LAPACK5)
+$(DYLIB_LAPACKE5): $(C_SRC_LAPACKE5)
 	@mkdir -p $(@D)
-	 $(CC) $(CFLAGS) -shared -fPIC $(C_SRC_LAPACK5) -llapacke -lcblas -o $(DYLIB_LAPACK5)
+	 $(CC) $(CFLAGS) -shared -fPIC $(C_SRC_LAPACKE5) -llapacke -lcblas -o $(DYLIB_LAPACKE5)
 
 $(DYLIB_CBLAS): $(C_SRC_CBLAS) 
 	@mkdir -p $(@D)

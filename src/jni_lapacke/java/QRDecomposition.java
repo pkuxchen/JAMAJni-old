@@ -200,16 +200,9 @@ public class QRDecomposition implements java.io.Serializable {
     public static native int dgeqp3(int matrix_layout, int m, int n, double[] a, int lda,
                                     int[] jpvt, double[] tau);
     
-    /*DGEQP3 computes a QR factorization with column pivoting of a
-     matrix A:  A*P = Q*R  using Level 3 BLAS.*/
-    
     public static native int dormqr(int matrix_layout, char side, char trans,
                                     int m, int n, int k, double[] a, int lda, double[] tau,
                                     double[] c, int ldc);
-    
-/*    public static native void dtrsm(char side, char uplo, char transa, char diag,
-                                   int m, int n, double alpha, double[] a, int lda,
-                                   double[] b, int ldb);*/
 
     private static final long serialVersionUID = 1;
     /**inform java virtual machine that function is defined externally*/

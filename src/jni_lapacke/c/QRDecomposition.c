@@ -2,9 +2,6 @@
 #include <assert.h>
 #include <lapacke.h>
 
-/*extern void dtrsm_(char *side, char *uplo, char *transa, char *diag, int *m,
-                   int *n, double *alpha, double *A, int *lda, double *B,
-                   int *ldb);*/
 
 JNIEXPORT jint Java_JAMAJni_QRDecomposition_dgeqrf (JNIEnv *env, jclass klass, jint matrix_layout,
                                                     jint m, jint n, jdoubleArray a, jint lda,
