@@ -20,14 +20,21 @@ public final class JAMAExamples {
         int matrix_layout = Matrix.LAYOUT.RowMajor;
         int[] pivot;
 
+        int trans = Matrix.TRANSPOSE.Trans;
+        int notrans = Matrix.TRANSPOSE.NoTrans;
+
         double[][] a = new double[][] {{12,-51,4},{6,167,-68},{-4,24,-41}};
         double[][] b = new double[][] {{4,-2,-6},{-2,10,9},{-6,9,14}};
         double[][] c;
+        double[][] aa = new double[][] {{1,2,3},{2,4,4}};
+        double[][] bb = new double[][] {{1,2},{3,1},{-1,0}};
         //
         //Construct Matrix
         //
         Matrix A = new Matrix(a);
         Matrix B = new Matrix(b);
+        Matrix AA = new Matrix(aa);
+        Matrix BB = new Matrix(bb);
 
         Matrix C = new Matrix(M,N);
         Matrix D = new Matrix(M,N);
@@ -69,6 +76,32 @@ public final class JAMAExamples {
         System.out.println("\n##  Multiplication: C = A * B  ##");
         C = A.times(B);
         printMatrix("C = ", matrix_layout, C.getArray(), M, N);
+        //
+        //TIMES with transpose option
+        //
+        System.out.println("\n##  Multiplication with transpose option: C = A' * B  ##");
+        C = A.times(B,trans,notrans);
+        printMatrix("C = ", matrix_layout, C.getArray(), M, N);
+        //
+        //TIMES with transpose option
+        //
+        System.out.println("\n##  Multiplication with transpose option: C = A * B  ##");
+        C = A.times(B,notrans,notrans);
+        printMatrix("C = ", matrix_layout, C.getArray(), M, N);
+        //
+        //TIMES with transpose option
+        //
+        printMatrix("\nMatrix AA", matrix_layout, AA.getArray(), 2, N);
+        printMatrix("\nMatrix BB", matrix_layout, BB.getArray(), M, 2);
+        System.out.println("\n##  Multiplication with transpose option: C = AA * BB  ##");
+        C = AA.times(BB,notrans,notrans);
+        printMatrix("C = ", matrix_layout, C.getArray(), C.getRowDimension(), C.getColumnDimension());
+        //
+        //TIMES with transpose option
+        //
+        System.out.println("\n##  Multiplication : C = AA' * BB'  ##");
+        C = AA.times(BB,trans,trans);
+        printMatrix("C = ", matrix_layout, C.getArray(), C.getRowDimension(), C.getColumnDimension());
         //
         //SCALAR
         //
