@@ -628,12 +628,47 @@ public class Matrix implements Cloneable, java.io.Serializable {
      */
     
     public Matrix times (Matrix B) {
+    	if (B.m != n) {
+            throw new IllegalArgumentException("Matrix dimensions must agree.");
+        }
         double[] a = this.getColumnPackedCopy();
         double[] b = B.getColumnPackedCopy();
         double[] c = new double[m * B.getColumnDimension()];
         dgemm(Matrix.LAYOUT.ColMajor, Matrix.TRANSPOSE.NoTrans, Matrix.TRANSPOSE.NoTrans,
               m, B.getColumnDimension(), n, 1, a, m, b, n, 0, c, m);
         Matrix X = new Matrix(c, m);
+        return X;
+    }
+
+     public Matrix times (Matrix B, int TransA, int TransB) {
+        int nrow, ncol, bnrow, bncol, lda, ldb;
+        if (TransA == Matrix.TRANSPOSE.NoTrans){
+            nrow = m;
+            ncol = n;
+            lda = nrow;}
+        else{
+            nrow = n;
+            ncol = m;
+            lda = ncol;
+        }
+        if (TransB == Matrix.TRANSPOSE.NoTrans){
+            bnrow = B.m;
+            bncol = B.n;
+            ldb = bnrow;}
+        else{
+            bnrow = B.n;
+            bncol = B.m;
+            ldb = bncol;
+        }
+        if (ncol != bnrow) {
+            throw new IllegalArgumentException("Matrix dimensions must agree.");
+        }
+
+        double[] a = this.getColumnPackedCopy();
+        double[] b = B.getColumnPackedCopy();
+        double[] c = new double[nrow * bncol];
+        dgemm(Matrix.LAYOUT.ColMajor, TransA, TransB, nrow, bncol, ncol, 1, a, lda, b, ldb, 0, c, nrow);
+        Matrix X = new Matrix(c, nrow);
         return X;
     }
     
