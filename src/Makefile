@@ -30,7 +30,7 @@ DYLIB_CBLAS = $(JAVA_HOME)/lib/libcblas_Matrix.so
 JC = javac
 JFLAGS = -d
 JAVA_SRC = $(JNI_UTIL)/Maths.java $(JNI_LAPACKE_SRC)/java/LUDecomposition.java $(JNI_LAPACKE_SRC)/java/CholeskyDecomposition.java $(JNI_LAPACKE_SRC)/java/QRDecomposition.java $(JNI_LAPACKE_SRC)/java/EigenvalueDecomposition.java $(JNI_LAPACKE_SRC)/java/SingularValueDecomposition.java $(JNI_CBLAS_SRC)/java/Matrix.java 
-PACKAGE = $(JAVA_HOME)/class/*
+PACKAGE = $(JAVA_HOME)/class/JAMAJni
 
 
 all: $(PACKAGE) $(DYLIB_LAPACKE1) $(DYLIB_LAPACKE2) $(DYLIB_LAPACKE3) $(DYLIB_LAPACKE4) $(DYLIB_LAPACKE5) $(DYLIB_CBLAS)
@@ -65,8 +65,4 @@ $(DYLIB_CBLAS): $(C_SRC_CBLAS)
 clean: 
 	rm -fr $(JAVA_HOME)/class
 	rm -fr $(JAVA_HOME)/lib
-	rm -f $(JAVA_HOME)/lib/*.so
-	rm -f $(JAVA_HOME)/test/*.class
-	rm -f $(JAVA_HOME)/test/*.txt
-	rm -f $(JAVA_HOME)/test/*.out
-	rm -f $(JAVA_HOME)/test/*.serial
+	
